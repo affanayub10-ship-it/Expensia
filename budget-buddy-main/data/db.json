@@ -1,0 +1,358 @@
+{
+  "expenses": [
+    {
+      "id": "jq8a7uq7",
+      "title": "burger",
+      "amount": 300,
+      "date": "2026-06-08",
+      "category": "Food",
+      "paymentMethod": "Credit Card",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "None",
+      "merchant": "KFC",
+      "receipt": "9.png"
+    },
+    {
+      "id": "e1",
+      "title": "Grocery run",
+      "amount": 84.2,
+      "date": "2026-07-08",
+      "category": "Food",
+      "paymentMethod": "Debit Card",
+      "merchant": "Whole Foods",
+      "location": "Downtown",
+      "currency": "USD",
+      "tags": [
+        "groceries"
+      ],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e2",
+      "title": "Gas fill-up",
+      "amount": 52.6,
+      "date": "2026-07-07",
+      "category": "Fuel",
+      "paymentMethod": "Credit Card",
+      "merchant": "Shell",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "Weekly"
+    },
+    {
+      "id": "e3",
+      "title": "Netflix subscription",
+      "amount": 15.49,
+      "date": "2026-07-06",
+      "category": "Entertainment",
+      "paymentMethod": "Credit Card",
+      "merchant": "Netflix",
+      "currency": "USD",
+      "tags": [
+        "streaming"
+      ],
+      "status": "Paid",
+      "recurrence": "Monthly"
+    },
+    {
+      "id": "e4",
+      "title": "New sneakers",
+      "amount": 129.99,
+      "date": "2026-07-05",
+      "category": "Shopping",
+      "paymentMethod": "Credit Card",
+      "merchant": "Nike",
+      "currency": "USD",
+      "tags": [
+        "clothing"
+      ],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e5",
+      "title": "Electricity bill",
+      "amount": 96.3,
+      "date": "2026-07-04",
+      "category": "Bills",
+      "paymentMethod": "Bank Transfer",
+      "merchant": "PG&E",
+      "currency": "USD",
+      "tags": [
+        "utilities"
+      ],
+      "status": "Pending",
+      "recurrence": "Monthly"
+    },
+    {
+      "id": "e6",
+      "title": "Dinner out",
+      "amount": 62,
+      "date": "2026-07-03",
+      "category": "Food",
+      "paymentMethod": "Mobile Wallet",
+      "merchant": "Olive Garden",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e7",
+      "title": "Pharmacy",
+      "amount": 24.75,
+      "date": "2026-07-02",
+      "category": "Healthcare",
+      "paymentMethod": "Cash",
+      "merchant": "CVS",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e8",
+      "title": "Monthly rent",
+      "amount": 1450,
+      "date": "2026-06-30",
+      "category": "Rent",
+      "paymentMethod": "Bank Transfer",
+      "merchant": "Landlord",
+      "currency": "USD",
+      "tags": [
+        "housing"
+      ],
+      "status": "Paid",
+      "recurrence": "Monthly"
+    },
+    {
+      "id": "e9",
+      "title": "Online course",
+      "amount": 39.99,
+      "date": "2026-06-28",
+      "category": "Education",
+      "paymentMethod": "Credit Card",
+      "merchant": "Udemy",
+      "currency": "USD",
+      "tags": [
+        "learning"
+      ],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e10",
+      "title": "Flight to NYC",
+      "amount": 320,
+      "date": "2026-06-26",
+      "category": "Travel",
+      "paymentMethod": "Credit Card",
+      "merchant": "Delta",
+      "currency": "USD",
+      "tags": [
+        "trip"
+      ],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e11",
+      "title": "Coffee",
+      "amount": 5.75,
+      "date": "2026-06-25",
+      "category": "Food",
+      "paymentMethod": "Cash",
+      "merchant": "Starbucks",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "Daily"
+    },
+    {
+      "id": "e12",
+      "title": "Gym membership",
+      "amount": 45,
+      "date": "2026-06-23",
+      "category": "Healthcare",
+      "paymentMethod": "Credit Card",
+      "merchant": "Equinox",
+      "currency": "USD",
+      "tags": [
+        "fitness"
+      ],
+      "status": "Paid",
+      "recurrence": "Monthly"
+    },
+    {
+      "id": "e13",
+      "title": "Amazon order",
+      "amount": 78.4,
+      "date": "2026-06-20",
+      "category": "Shopping",
+      "paymentMethod": "Credit Card",
+      "merchant": "Amazon",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "None"
+    },
+    {
+      "id": "e14",
+      "title": "Water bill",
+      "amount": 34.1,
+      "date": "2026-06-18",
+      "category": "Bills",
+      "paymentMethod": "Bank Transfer",
+      "merchant": "City Water",
+      "currency": "USD",
+      "tags": [
+        "utilities"
+      ],
+      "status": "Paid",
+      "recurrence": "Monthly"
+    },
+    {
+      "id": "e15",
+      "title": "Movie night",
+      "amount": 28.5,
+      "date": "2026-06-16",
+      "category": "Entertainment",
+      "paymentMethod": "Debit Card",
+      "merchant": "AMC",
+      "currency": "USD",
+      "tags": [],
+      "status": "Paid",
+      "recurrence": "None"
+    }
+  ],
+  "income": [
+    {
+      "id": "i1",
+      "source": "Monthly salary",
+      "amount": 4200,
+      "date": "2026-07-06",
+      "category": "Salary",
+      "currency": "USD",
+      "notes": "ACME Corp"
+    },
+    {
+      "id": "i2",
+      "source": "Website project",
+      "amount": 760,
+      "date": "2026-07-02",
+      "category": "Freelance",
+      "currency": "USD"
+    },
+    {
+      "id": "i3",
+      "source": "Dividends",
+      "amount": 120,
+      "date": "2026-06-29",
+      "category": "Investment",
+      "currency": "USD"
+    },
+    {
+      "id": "i4",
+      "source": "Store refund",
+      "amount": 45,
+      "date": "2026-06-26",
+      "category": "Refund",
+      "currency": "USD"
+    },
+    {
+      "id": "i5",
+      "source": "Q2 bonus",
+      "amount": 600,
+      "date": "2026-06-18",
+      "category": "Bonus",
+      "currency": "USD"
+    }
+  ],
+  "budgets": [
+    {
+      "id": "b1",
+      "category": "Food",
+      "limit": 600
+    },
+    {
+      "id": "b2",
+      "category": "Fuel",
+      "limit": 300
+    },
+    {
+      "id": "b3",
+      "category": "Entertainment",
+      "limit": 250
+    },
+    {
+      "id": "b4",
+      "category": "Shopping",
+      "limit": 400
+    },
+    {
+      "id": "b5",
+      "category": "Bills",
+      "limit": 350
+    },
+    {
+      "id": "b6",
+      "category": "Rent",
+      "limit": 1500
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n1",
+      "type": "budget",
+      "title": "Budget warning",
+      "message": "You've used 85% of your Food budget.",
+      "time": "2h ago",
+      "read": true
+    },
+    {
+      "id": "n2",
+      "type": "recurring",
+      "title": "Recurring payment",
+      "message": "Netflix subscription charged $15.49.",
+      "time": "1d ago",
+      "read": true
+    },
+    {
+      "id": "n3",
+      "type": "bill",
+      "title": "Upcoming bill",
+      "message": "Electricity bill of $96.30 is due in 3 days.",
+      "time": "1d ago",
+      "read": true
+    },
+    {
+      "id": "n4",
+      "type": "summary",
+      "title": "Weekly summary",
+      "message": "You spent $312 this week across 8 transactions.",
+      "time": "3d ago",
+      "read": true
+    }
+  ],
+  "paymentMethods": [
+    "Cash",
+    "Debit Card",
+    "Credit Card",
+    "Bank Transfer",
+    "Mobile Wallet"
+  ],
+  "settings": {
+    "currency": "USD",
+    "timezone": "America/Los_Angeles",
+    "dateFormat": "MMM d, yyyy",
+    "language": "English",
+    "defaultPaymentMethod": "Debit Card",
+    "defaultCategory": "Food",
+    "name": "Affan",
+    "email": "affanayub5@gmail.com"
+  }
+}
