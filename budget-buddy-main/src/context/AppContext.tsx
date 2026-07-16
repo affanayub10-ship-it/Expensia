@@ -96,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const stored = localStorage.getItem("ems-theme") as Theme | null;
     const initial =
       stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -103,6 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("ems-theme", theme);
   }, [theme]);

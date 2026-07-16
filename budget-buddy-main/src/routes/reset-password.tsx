@@ -35,13 +35,17 @@ function ResetPasswordPage() {
         setIsValidSession(true);
         
         // SECURITY: Store a flag to prevent navigation during password reset
-        sessionStorage.setItem("password_reset_in_progress", "true");
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem("password_reset_in_progress", "true");
+        }
       }
     });
 
     // SECURITY: Cleanup the flag when leaving this page
     return () => {
-      sessionStorage.removeItem("password_reset_in_progress");
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem("password_reset_in_progress");
+      }
     };
   }, [navigate]);
 
