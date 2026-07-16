@@ -133,10 +133,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(),
         {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${origin}/reset-password`,
         }
       );
       

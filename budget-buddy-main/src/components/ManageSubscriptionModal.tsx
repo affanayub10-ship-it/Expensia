@@ -133,15 +133,16 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       if (priceId && !priceId.includes("your_stripe")) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error("No session");
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const res = await supabase.functions.invoke("create-checkout", {
           body: {
             priceId,
-            successUrl: `${window.location.origin}/premium?success=true`,
-            cancelUrl: `${window.location.origin}/premium?canceled=true`,
+            successUrl: `${origin}/premium?success=true`,
+            cancelUrl: `${origin}/premium?canceled=true`,
           },
         });
         if (res.error) throw new Error(res.error.message);
-        if (res.data?.url) { window.location.href = res.data.url; return; }
+        if (res.data?.url && typeof window !== 'undefined') { window.location.href = res.data.url; return; }
       }
 
       const { error } = await supabase.from("subscriptions").upsert(
@@ -173,7 +174,7 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       if (!session) throw new Error("No session");
       const res = await supabase.functions.invoke("create-portal-session", {});
       if (res.error) throw new Error(res.error.message);
-      if (res.data?.url) { window.location.href = res.data.url; return; }
+      if (res.data?.url && typeof window !== 'undefined') { window.location.href = res.data.url; return; }
       toast.error("Could not open payment settings.");
     } catch (err) {
       console.error(err);

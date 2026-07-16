@@ -45,11 +45,12 @@ async function createCheckoutSession(userId: string, priceId: string): Promise<s
   }
 
   console.log("[Stripe] 📡 Invoking create-checkout edge function...");
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const res = await supabase.functions.invoke("create-checkout", {
     body: {
       priceId,
-      successUrl: `${window.location.origin}/pricing?success=true`,
-      cancelUrl: `${window.location.origin}/pricing?canceled=true`,
+      successUrl: `${origin}/pricing?success=true`,
+      cancelUrl: `${origin}/pricing?canceled=true`,
     },
   });
 
@@ -76,6 +77,7 @@ function PricingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     
     if (params.get("success") === "true") {
@@ -151,7 +153,9 @@ function PricingPage() {
       if (checkoutUrl) {
         console.log("[Stripe] ✅ Redirecting to:", checkoutUrl);
         toast.info("Redirecting to secure checkout...");
-        window.location.href = checkoutUrl;
+        if (typeof window !== 'undefined') {
+          window.location.href = checkoutUrl;
+        }
       } else {
         throw new Error("No checkout URL returned");
       }

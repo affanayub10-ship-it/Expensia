@@ -58,15 +58,16 @@ export function PremiumUpgradeModal({ open, onClose }: { open: boolean; onClose:
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session");
 
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const res = await supabase.functions.invoke("create-checkout", {
         body: {
           priceId,
-          successUrl: `${window.location.origin}/premium?success=true`,
-          cancelUrl: `${window.location.origin}/premium?canceled=true`,
+          successUrl: `${origin}/premium?success=true`,
+          cancelUrl: `${origin}/premium?canceled=true`,
         },
       });
       if (res.error) throw new Error(res.error.message);
-      if (res.data?.url) {
+      if (res.data?.url && typeof window !== 'undefined') {
         window.location.href = res.data.url;
       }
     } catch (err) {
