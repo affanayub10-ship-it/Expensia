@@ -14,9 +14,17 @@ export default defineConfig({
   },
   nitro: {
     preset: "vercel",
-    // Force bundle tslib and other peer dependencies for Vercel
+    // Bundle all node_modules for Vercel serverless
+    moduleSideEffects: true,
     externals: {
-      inline: ["tslib", "@radix-ui/react-alert-dialog"],
+      // Force inline bundling of all dependencies
+      inline: true,
+    },
+    rollupConfig: {
+      output: {
+        // Ensure proper module format for Vercel
+        format: "esm",
+      },
     },
   },
 });
