@@ -8,22 +8,66 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+    // Disable SSR for Vercel deployment to avoid module resolution issues
+    ssr: false,
   },
   nitro: {
     preset: "vercel",
-    // Bundle all node_modules for Vercel serverless
+    // Static site generation mode
+    static: true,
+    compressPublicAssets: true,
+    // Bundle all dependencies inline
     moduleSideEffects: true,
     externals: {
-      // Force inline bundling of all dependencies
       inline: true,
     },
     rollupConfig: {
       output: {
-        // Ensure proper module format for Vercel
         format: "esm",
+        inlineDynamicImports: false,
+      },
+    },
+    // Ensure all routes are pre-rendered
+    prerender: {
+      crawlLinks: true,
+      routes: [
+        '/',
+        '/login',
+        '/expenses',
+        '/income',
+        '/budgets',
+        '/savings',
+        '/reports',
+        '/predictions',
+        '/settings',
+        '/pricing',
+        '/premium',
+        '/reset-password',
+        '/health',
+      ],
+    },
+  },
+  vite: {
+    ssr: {
+      // Prevent SSR issues with these packages
+      noExternal: ['@radix-ui/*', '@supabase/supabase-js'],
+    },
+    build: {
+      // Target modern browsers for better compatibility
+      target: 'es2020',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'radix-ui': [
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-select',
+              '@radix-ui/react-dropdown-menu',
+            ],
+            'supabase': ['@supabase/supabase-js'],
+            'charts': ['recharts'],
+          },
+        },
       },
     },
   },
