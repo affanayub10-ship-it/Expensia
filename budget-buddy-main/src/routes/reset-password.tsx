@@ -18,6 +18,7 @@ function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -26,10 +27,22 @@ function ResetPasswordPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         // No session means invalid or expired link
-        toast.error("Invalid or expired reset link");
-        navigate({ to: "/login" });
+        toast.error("Invalid or expired reset link. Please request a new password reset.");
+        setTimeout(() => {
+          navigate({ to: "/login" });
+        }, 2000);
+      } else {
+        setIsValidSession(true);
+        
+        // SECURITY: Store a flag to prevent navigation during password reset
+        sessionStorage.setItem("password_reset_in_progress", "true");
       }
     });
+
+    // SECURITY: Cleanup the flag when leaving this page
+    return () => {
+      sessionStorage.removeItem("password_reset_in_progress");
+    };
   }, [navigate]);
 
   async function handleSubmit(e: FormEvent) {
@@ -60,6 +73,12 @@ function ResetPasswordPage() {
       setIsSuccess(true);
       toast.success("Password updated successfully!");
       
+      // SECURITY: Clear the reset flag before signing out
+      sessionStorage.removeItem("password_reset_in_progress");
+      
+      // Sign out the user after password reset for security
+      await supabase.auth.signOut();
+      
       // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate({ to: "/login" });
@@ -71,6 +90,34 @@ function ResetPasswordPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // Don't render anything until we've verified the session
+  if (!isValidSession) {
+    return (
+      <div style={{
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "hsl(240 10% 3.9%)",
+        color: "#f8fafc",
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: "48px",
+            height: "48px",
+            border: "3px solid rgba(99, 102, 241, 0.3)",
+            borderTopColor: "#6366f1",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+            margin: "0 auto 16px"
+          }} />
+          <p>Verifying reset link...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -366,7 +413,10 @@ function ResetPasswordPage() {
               <button
                 type="button"
                 className="reset-back-btn"
-                onClick={() => navigate({ to: "/login" })}
+                onClick={() => {
+                  sessionStorage.removeItem("password_reset_in_progress");
+                  navigate({ to: "/login" });
+                }}
               >
                 <ArrowLeft size={16} />
                 Back to sign in
@@ -476,7 +526,10 @@ function ResetPasswordPage() {
                 <button
                   type="button"
                   className="reset-back-btn"
-                  onClick={() => navigate({ to: "/login" })}
+                  onClick={() => {
+                    sessionStorage.removeItem("password_reset_in_progress");
+                    navigate({ to: "/login" });
+                  }}
                 >
                   <ArrowLeft size={16} />
                   Back to sign in

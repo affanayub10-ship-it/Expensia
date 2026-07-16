@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SavingsRouteImport } from './routes/savings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PremiumRouteImport } from './routes/premium'
@@ -31,6 +32,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SavingsRoute = SavingsRouteImport.update({
   id: '/savings',
   path: '/savings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/premium': typeof PremiumRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/premium': typeof PremiumRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/premium': typeof PremiumRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/premium'
     | '/pricing'
     | '/reports'
+    | '/reset-password'
     | '/savings'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/premium'
     | '/pricing'
     | '/reports'
+    | '/reset-password'
     | '/savings'
     | '/settings'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/premium'
     | '/pricing'
     | '/reports'
+    | '/reset-password'
     | '/savings'
     | '/settings'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   PremiumRoute: typeof PremiumRoute
   PricingRoute: typeof PricingRoute
   ReportsRoute: typeof ReportsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SavingsRoute: typeof SavingsRoute
   SettingsRoute: typeof SettingsRoute
 }
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/savings'
       fullPath: '/savings'
       preLoaderRoute: typeof SavingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   PremiumRoute: PremiumRoute,
   PricingRoute: PricingRoute,
   ReportsRoute: ReportsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SavingsRoute: SavingsRoute,
   SettingsRoute: SettingsRoute,
 }

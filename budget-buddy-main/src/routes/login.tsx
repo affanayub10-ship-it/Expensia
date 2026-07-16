@@ -763,6 +763,8 @@ function LoginPage() {
                 <h3 className="login-success-title">Check your inbox</h3>
                 <p className="login-success-desc">
                   We've sent a password recovery link to <strong>{email}</strong>.
+                  <br /><br />
+                  <strong>Note:</strong> Click the link in your email, then come back to this page to stay logged in.
                 </p>
               </div>
             ) : (
