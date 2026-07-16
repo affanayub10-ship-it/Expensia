@@ -7,68 +7,25 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  tanstackStart: {
-    // Disable SSR for Vercel deployment to avoid module resolution issues
-    ssr: false,
-  },
   nitro: {
     preset: "vercel",
-    // Static site generation mode
-    static: true,
-    compressPublicAssets: true,
-    // Bundle all dependencies inline
-    moduleSideEffects: true,
+    // Force ALL external dependencies to be bundled inline
     externals: {
       inline: true,
+      // Also explicitly list problematic packages
+      traceInclude: [
+        'tslib',
+        '@radix-ui/**',
+      ],
     },
+    // Ensure side effects are preserved during bundling
+    moduleSideEffects: true,
     rollupConfig: {
       output: {
         format: "esm",
-        inlineDynamicImports: false,
       },
-    },
-    // Ensure all routes are pre-rendered
-    prerender: {
-      crawlLinks: true,
-      routes: [
-        '/',
-        '/login',
-        '/expenses',
-        '/income',
-        '/budgets',
-        '/savings',
-        '/reports',
-        '/predictions',
-        '/settings',
-        '/pricing',
-        '/premium',
-        '/reset-password',
-        '/health',
-      ],
-    },
-  },
-  vite: {
-    ssr: {
-      // Prevent SSR issues with these packages
-      noExternal: ['@radix-ui/*', '@supabase/supabase-js'],
-    },
-    build: {
-      // Target modern browsers for better compatibility
-      target: 'es2020',
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'radix-ui': [
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-select',
-              '@radix-ui/react-dropdown-menu',
-            ],
-            'supabase': ['@supabase/supabase-js'],
-            'charts': ['recharts'],
-          },
-        },
-      },
+      // Bundle everything, including node_modules
+      external: [],
     },
   },
 });
