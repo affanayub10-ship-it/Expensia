@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { User, Lock, Palette, SlidersHorizontal, Upload, Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { User, Lock, Palette, SlidersHorizontal, Upload, Eye, EyeOff, Crown, Sparkles, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,8 @@ import {
 import { PageHeader } from "@/components/shared";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
-import { CURRENCIES, EXCHANGE_RATES } from "@/lib/format";
-import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/lib/mock-data";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { EXPENSE_CATEGORIES } from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
@@ -36,21 +36,10 @@ const TIMEZONES = [
 const DATE_FORMATS = ["MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd"];
 const LANGUAGES = ["English", "Spanish", "French", "German", "Hindi"];
 
-const CURRENCY_NAMES: Record<string, string> = {
-  USD: "US Dollar",
-  EUR: "Euro",
-  GBP: "British Pound",
-  INR: "Indian Rupee",
-  PKR: "Pakistani Rupee",
-  BDT: "Bangladeshi Taka",
-  JPY: "Japanese Yen",
-  CAD: "Canadian Dollar",
-  AUD: "Australian Dollar",
-};
-
 function SettingsPage() {
   const { settings, updateSettings, theme, toggleTheme } = useApp();
   const { changePassword } = useAuth();
+  const { subscription, isPremium } = useSubscription();
   const [name, setName] = useState(settings.name);
   const [email, setEmail] = useState(settings.email);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(settings.avatar ?? null);
@@ -327,28 +316,6 @@ function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-1.5">
-              <label className="text-xs text-muted-foreground">Currency</label>
-              <Select value={settings.currency} onValueChange={(v) => updateSettings({ currency: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(CURRENCIES).map(([code, cfg]) => (
-                    <SelectItem key={code} value={code}>
-                      <span className="font-medium">{cfg.symbol}</span>
-                      {" "}{code} – {CURRENCY_NAMES[code] ?? code}
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        (1 USD = {EXCHANGE_RATES[code]} {code})
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                ⚡ All amounts are stored in USD and converted at approximate static rates.
-              </p>
-            </div>
             <SettingSelect
               label="Timezone"
               value={settings.timezone}
@@ -356,17 +323,57 @@ function SettingsPage() {
               onChange={(v) => updateSettings({ timezone: v })}
             />
             <SettingSelect
-              label="Default payment method"
-              value={settings.defaultPaymentMethod}
-              options={PAYMENT_METHODS}
-              onChange={(v) => updateSettings({ defaultPaymentMethod: v })}
-            />
-            <SettingSelect
               label="Default expense category"
               value={settings.defaultCategory}
               options={EXPENSE_CATEGORIES.map((c) => c.name)}
               onChange={(v) => updateSettings({ defaultCategory: v })}
             />
+          </CardContent>
+        </Card>
+
+        {/* ── Subscription Status Card ── */}
+        <Card className="shadow-soft lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              {isPremium
+                ? <Crown className="h-4 w-4 text-primary" />
+                : <Sparkles className="h-4 w-4 text-muted-foreground" />}
+              Subscription
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold capitalize">{subscription.plan} Plan</span>
+                {isPremium && subscription.cancelAtPeriodEnd && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">Cancelling</span>
+                )}
+                {isPremium && !subscription.cancelAtPeriodEnd && (
+                  <span className="rounded-full bg-income/15 px-2 py-0.5 text-[10px] font-semibold text-income">Active</span>
+                )}
+                {!isPremium && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {subscription.status === "canceled" ? "Canceled" : "Free"}
+                  </span>
+                )}
+              </div>
+              {isPremium && subscription.currentPeriodEnd && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Shield className="h-3 w-3" />
+                  {subscription.cancelAtPeriodEnd
+                    ? `Active until ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                    : `Renews ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                </p>
+              )}
+              {!isPremium && (
+                <p className="text-xs text-muted-foreground">Upgrade to unlock Budgets, Savings & more</p>
+              )}
+            </div>
+            <Link to="/premium">
+              <Button variant={isPremium ? "outline" : "default"} size="sm" className="gap-1.5 shrink-0">
+                {isPremium ? <><Crown className="h-3.5 w-3.5" /> View Premium</> : <><Sparkles className="h-3.5 w-3.5" /> View Premium</>}
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -403,3 +410,5 @@ function SettingSelect({
     </div>
   );
 }
+
+

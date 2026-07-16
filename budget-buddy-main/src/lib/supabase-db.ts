@@ -1,44 +1,58 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 import type {
   Expense,
   Income,
   Budget,
   AppNotification,
   Settings,
-} from './mock-data';
+  SavingsGoal,
+  SavingsContribution,
+  PaymentHistory,
+} from "./mock-data";
 
-// Helper to get current user ID
+let _cachedUserId: string | null = null;
+let _userIdPromise: Promise<string> | null = null;
+
 async function getCurrentUserId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-  return user.id;
+  if (_cachedUserId) return _cachedUserId;
+  if (_userIdPromise) return _userIdPromise;
+  _userIdPromise = (async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      _cachedUserId = session.user.id;
+      return _cachedUserId;
+    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+    _cachedUserId = user.id;
+    return _cachedUserId;
+  })();
+  return _userIdPromise;
 }
 
-// ============================================
-// EXPENSES
-// ============================================
+// ── EXPENSES ──────────────────────────────────────────────────────────────────
 
 export async function getExpenses(): Promise<Expense[]> {
   const userId = await getCurrentUserId();
-  
   const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('user_id', userId)
-    .order('date', { ascending: false });
-
+    .from("expenses")
+    .select(
+      "id, title, amount, date, category, location, tags, status, recurrence, receipt, deleted",
+    )
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
   if (error) throw error;
-
-  return (data || []).map(row => ({
+  return (data || []).map((row) => ({
     id: row.id,
     title: row.title,
     amount: Number(row.amount),
     date: row.date,
     category: row.category,
-    paymentMethod: row.payment_method,
-    merchant: row.merchant || undefined,
     location: row.location || undefined,
-    currency: row.currency,
     tags: row.tags || [],
     status: row.status,
     recurrence: row.recurrence,
@@ -47,42 +61,150 @@ export async function getExpenses(): Promise<Expense[]> {
   }));
 }
 
+export async function getExpensesPaginated(
+  page: number = 1,
+  limit: number = 20,
+): Promise<{ data: Expense[]; hasMore: boolean }> {
+  const userId = await getCurrentUserId();
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
+    .from("expenses")
+    .select(
+      "id, title, amount, date, category, location, tags, status, recurrence, receipt, deleted",
+      { count: "exact" },
+    )
+    .eq("user_id", userId)
+    .eq("deleted", false)
+    .order("date", { ascending: false })
+    .range(from, to);
+
+  if (error) throw error;
+
+  const expenses = (data || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    amount: Number(row.amount),
+    date: row.date,
+    category: row.category,
+    location: row.location || undefined,
+    tags: row.tags || [],
+    status: row.status,
+    recurrence: row.recurrence,
+    receipt: row.receipt || undefined,
+    deleted: row.deleted,
+  }));
+
+  const hasMore = count ? from + limit < count : false;
+
+  return { data: expenses, hasMore };
+}
+
+export async function getExpensesWithFilters(filters: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  sortBy?: "date" | "amount";
+  sortOrder?: "asc" | "desc";
+}): Promise<{ data: Expense[]; hasMore: boolean }> {
+  const userId = await getCurrentUserId();
+  const {
+    page = 1,
+    limit = 20,
+    category,
+    dateFrom,
+    dateTo,
+    search,
+    sortBy = "date",
+    sortOrder = "desc",
+  } = filters;
+  const fetchLimit = limit + 1;
+  const from = (page - 1) * limit;
+  const to = from + fetchLimit - 1;
+
+  let query = supabase
+    .from("expenses")
+    .select("id, title, amount, date, category, location, tags, status, recurrence, receipt, deleted")
+    .eq("user_id", userId)
+    .eq("deleted", false);
+
+  if (category && category !== "all") {
+    query = query.eq("category", category);
+  }
+
+  if (dateFrom) {
+    query = query.gte("date", dateFrom);
+  }
+
+  if (dateTo) {
+    query = query.lte("date", dateTo);
+  }
+
+  if (search) {
+    const s = search.replace(/'/g, "''");
+    query = query.or(`title.ilike.%${s}%,category.ilike.%${s}%,notes.ilike.%${s}%`);
+  }
+
+  query = query.order(sortBy, { ascending: sortOrder === "asc" }).range(from, to);
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  const raw = data || [];
+  const hasMore = raw.length > limit;
+  if (hasMore) raw.pop();
+
+  const expenses = raw.map((row) => ({
+    id: row.id,
+    title: row.title,
+    amount: Number(row.amount),
+    date: row.date,
+    category: row.category,
+    location: row.location || undefined,
+    tags: row.tags || [],
+    status: row.status,
+    recurrence: row.recurrence,
+    receipt: row.receipt || undefined,
+    deleted: row.deleted,
+  }));
+
+  return { data: expenses, hasMore };
+}
+
 export async function addExpense(expense: Expense): Promise<Expense> {
   const userId = await getCurrentUserId();
-
   const { data, error } = await supabase
-    .from('expenses')
+    .from("expenses")
     .insert({
       user_id: userId,
       title: expense.title,
       amount: expense.amount,
       date: expense.date,
       category: expense.category,
-      payment_method: expense.paymentMethod,
-      merchant: expense.merchant,
-      location: expense.location,
-      currency: expense.currency,
+      location: expense.location ?? null,
       tags: expense.tags || [],
       status: expense.status,
       recurrence: expense.recurrence,
-      receipt: expense.receipt,
+      receipt: expense.receipt ?? null,
       deleted: expense.deleted || false,
     })
-    .select()
+    .select(
+      "id, title, amount, date, category, location, tags, status, recurrence, receipt, deleted",
+    )
     .single();
-
   if (error) throw error;
-
   return {
     id: data.id,
     title: data.title,
     amount: Number(data.amount),
     date: data.date,
     category: data.category,
-    paymentMethod: data.payment_method,
-    merchant: data.merchant || undefined,
     location: data.location || undefined,
-    currency: data.currency,
     tags: data.tags || [],
     status: data.status,
     recurrence: data.recurrence,
@@ -93,41 +215,34 @@ export async function addExpense(expense: Expense): Promise<Expense> {
 
 export async function updateExpense(expense: Expense): Promise<Expense> {
   const userId = await getCurrentUserId();
-
   const { data, error } = await supabase
-    .from('expenses')
+    .from("expenses")
     .update({
       title: expense.title,
       amount: expense.amount,
       date: expense.date,
       category: expense.category,
-      payment_method: expense.paymentMethod,
-      merchant: expense.merchant,
-      location: expense.location,
-      currency: expense.currency,
+      location: expense.location ?? null,
       tags: expense.tags || [],
       status: expense.status,
       recurrence: expense.recurrence,
-      receipt: expense.receipt,
+      receipt: expense.receipt ?? null,
       deleted: expense.deleted || false,
     })
-    .eq('id', expense.id)
-    .eq('user_id', userId)
-    .select()
+    .eq("id", expense.id)
+    .eq("user_id", userId)
+    .select(
+      "id, title, amount, date, category, location, tags, status, recurrence, receipt, deleted",
+    )
     .single();
-
   if (error) throw error;
-
   return {
     id: data.id,
     title: data.title,
     amount: Number(data.amount),
     date: data.date,
     category: data.category,
-    paymentMethod: data.payment_method,
-    merchant: data.merchant || undefined,
     location: data.location || undefined,
-    currency: data.currency,
     tags: data.tags || [],
     status: data.status,
     recurrence: data.recurrence,
@@ -138,207 +253,192 @@ export async function updateExpense(expense: Expense): Promise<Expense> {
 
 export async function deleteExpense(id: string): Promise<void> {
   const userId = await getCurrentUserId();
-
   const { error } = await supabase
-    .from('expenses')
+    .from("expenses")
     .update({ deleted: true })
-    .eq('id', id)
-    .eq('user_id', userId);
-
+    .eq("id", id)
+    .eq("user_id", userId);
   if (error) throw error;
 }
 
-// ============================================
-// INCOME
-// ============================================
+// ── INCOME ────────────────────────────────────────────────────────────────────
 
 export async function getIncome(): Promise<Income[]> {
   const userId = await getCurrentUserId();
-  
   const { data, error } = await supabase
-    .from('income')
-    .select('*')
-    .eq('user_id', userId)
-    .order('date', { ascending: false });
-
+    .from("income")
+    .select("id, source, amount, date, category, notes, recurrence, next_date")
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
   if (error) throw error;
-
-  return (data || []).map(row => ({
+  return (data || []).map((row) => ({
     id: row.id,
     source: row.source,
     amount: Number(row.amount),
     date: row.date,
     category: row.category,
-    currency: row.currency,
     notes: row.notes || undefined,
-    recurrence: (row.recurrence ?? 'One-time') as Income['recurrence'],
+    recurrence: (row.recurrence ?? "One-time") as Income["recurrence"],
     nextDate: row.next_date ?? undefined,
   }));
 }
 
 export async function addIncome(income: Income): Promise<Income> {
   const userId = await getCurrentUserId();
-
-  // Build the insert payload — only include recurrence/next_date if the
-  // Income type carries them, so the function works even before the SQL
-  // migration that adds those columns has been run.
   const payload: Record<string, unknown> = {
     user_id: userId,
     source: income.source,
     amount: income.amount,
     date: income.date,
     category: income.category,
-    currency: income.currency,
     notes: income.notes ?? null,
-    recurrence: income.recurrence ?? 'One-time',
+    recurrence: income.recurrence ?? "One-time",
     next_date: income.nextDate ?? null,
   };
-
   const { data, error } = await supabase
-    .from('income')
+    .from("income")
     .insert(payload)
-    .select()
+    .select("id, source, amount, date, category, notes, recurrence, next_date")
     .single();
-
-  if (error) {
-    // If the column doesn't exist yet, retry without the new fields
-    if (error.code === '42703') {
-      const { data: data2, error: error2 } = await supabase
-        .from('income')
-        .insert({
-          user_id: userId,
-          source: income.source,
-          amount: income.amount,
-          date: income.date,
-          category: income.category,
-          currency: income.currency,
-          notes: income.notes ?? null,
-        })
-        .select()
-        .single();
-      if (error2) throw error2;
-      return {
-        id: data2.id,
-        source: data2.source,
-        amount: Number(data2.amount),
-        date: data2.date,
-        category: data2.category,
-        currency: data2.currency,
-        notes: data2.notes || undefined,
-        recurrence: 'One-time',
-      };
-    }
-    throw error;
-  }
-
+  if (error) throw error;
   return {
     id: data.id,
     source: data.source,
     amount: Number(data.amount),
     date: data.date,
     category: data.category,
-    currency: data.currency,
     notes: data.notes || undefined,
-    recurrence: (data.recurrence as Income['recurrence']) ?? 'One-time',
+    recurrence: (data.recurrence as Income["recurrence"]) ?? "One-time",
     nextDate: data.next_date ?? undefined,
   };
 }
 
 export async function updateIncome(income: Income): Promise<Income> {
   const userId = await getCurrentUserId();
-
   const payload: Record<string, unknown> = {
     source: income.source,
     amount: income.amount,
     date: income.date,
     category: income.category,
-    currency: income.currency,
     notes: income.notes ?? null,
-    recurrence: income.recurrence ?? 'One-time',
+    recurrence: income.recurrence ?? "One-time",
     next_date: income.nextDate ?? null,
   };
-
   const { data, error } = await supabase
-    .from('income')
+    .from("income")
     .update(payload)
-    .eq('id', income.id)
-    .eq('user_id', userId)
-    .select()
+    .eq("id", income.id)
+    .eq("user_id", userId)
+    .select("id, source, amount, date, category, notes, recurrence, next_date")
     .single();
-
   if (error) {
-    // Retry without new columns if they don't exist yet
-    if (error.code === '42703') {
-      const { data: data2, error: error2 } = await supabase
-        .from('income')
+    if (error.code === "42703") {
+      const { data: d2, error: e2 } = await supabase
+        .from("income")
         .update({
           source: income.source,
           amount: income.amount,
           date: income.date,
           category: income.category,
-          currency: income.currency,
           notes: income.notes ?? null,
         })
-        .eq('id', income.id)
-        .eq('user_id', userId)
-        .select()
+        .eq("id", income.id)
+        .eq("user_id", userId)
+        .select("id, source, amount, date, category, notes, recurrence, next_date")
         .single();
-      if (error2) throw error2;
+      if (e2) throw e2;
       return {
-        id: data2.id,
-        source: data2.source,
-        amount: Number(data2.amount),
-        date: data2.date,
-        category: data2.category,
-        currency: data2.currency,
-        notes: data2.notes || undefined,
-        recurrence: income.recurrence ?? 'One-time',
+        id: d2.id,
+        source: d2.source,
+        amount: Number(d2.amount),
+        date: d2.date,
+        category: d2.category,
+        notes: d2.notes || undefined,
+        recurrence: income.recurrence ?? "One-time",
         nextDate: income.nextDate,
       };
     }
     throw error;
   }
-
   return {
     id: data.id,
     source: data.source,
     amount: Number(data.amount),
     date: data.date,
     category: data.category,
-    currency: data.currency,
     notes: data.notes || undefined,
-    recurrence: (data.recurrence as Income['recurrence']) ?? 'One-time',
+    recurrence: (data.recurrence as Income["recurrence"]) ?? "One-time",
     nextDate: data.next_date ?? undefined,
   };
 }
 
 export async function deleteIncome(id: string): Promise<void> {
   const userId = await getCurrentUserId();
-
-  const { error } = await supabase
-    .from('income')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId);
-
+  const { error } = await supabase.from("income").delete().eq("id", id).eq("user_id", userId);
   if (error) throw error;
 }
 
-// ============================================
-// BUDGETS
-// ============================================
+export async function getIncomeWithFilters(filters: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}): Promise<{ data: Income[]; hasMore: boolean }> {
+  const userId = await getCurrentUserId();
+  const { page = 1, limit = 20 } = filters;
+  const fetchLimit = limit + 1;
+  const from = (page - 1) * limit;
+  const to = from + fetchLimit - 1;
+
+  let query = supabase
+    .from("income")
+    .select("id, source, amount, date, category, notes, recurrence, next_date")
+    .eq("user_id", userId)
+    .order(
+      filters.sortBy === "amount" || filters.sortBy === "source" || filters.sortBy === "category"
+        ? filters.sortBy
+        : "date",
+      {
+        ascending: filters.sortOrder === "asc",
+      },
+    );
+  if (filters.category && filters.category !== "all") {
+    query = query.eq("category", filters.category);
+  }
+  if (filters.search) {
+    const s = filters.search.replace(/'/g, "''");
+    query = query.or(`source.ilike.%${s}%,category.ilike.%${s}%,notes.ilike.%${s}%`);
+  }
+  const { data, error } = await query.range(from, to);
+  if (error) throw error;
+  const raw = data || [];
+  const hasMore = raw.length > limit;
+  if (hasMore) raw.pop();
+  const parsed = raw.map((row) => ({
+    id: row.id,
+    source: row.source,
+    amount: Number(row.amount),
+    date: row.date,
+    category: row.category,
+    notes: row.notes || undefined,
+    recurrence: (row.recurrence ?? "One-time") as Income["recurrence"],
+    nextDate: row.next_date ?? undefined,
+  }));
+  return { data: parsed, hasMore };
+}
+
+// ── BUDGETS ───────────────────────────────────────────────────────────────────
 
 export async function getBudgets(): Promise<Budget[]> {
   const userId = await getCurrentUserId();
-  
   const { data, error } = await supabase
-    .from('budgets')
-    .select('*')
-    .eq('user_id', userId);
-
+    .from("budgets")
+    .select("id, category, limit_amount")
+    .eq("user_id", userId);
   if (error) throw error;
-
-  return (data || []).map(row => ({
+  return (data || []).map((row) => ({
     id: row.id,
     category: row.category,
     limit: Number(row.limit_amount),
@@ -347,82 +447,58 @@ export async function getBudgets(): Promise<Budget[]> {
 
 export async function saveBudget(budget: Budget): Promise<Budget> {
   const userId = await getCurrentUserId();
-
-  // Check if budget exists
   const { data: existing } = await supabase
-    .from('budgets')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('category', budget.category)
+    .from("budgets")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("category", budget.category)
     .single();
-
   if (existing) {
-    // Update existing
     const { data, error } = await supabase
-      .from('budgets')
+      .from("budgets")
       .update({ limit_amount: budget.limit })
-      .eq('id', existing.id)
-      .eq('user_id', userId)
-      .select()
+      .eq("id", existing.id)
+      .eq("user_id", userId)
+      .select("id, category, limit_amount")
       .single();
-
     if (error) throw error;
-
-    return {
-      id: data.id,
-      category: data.category,
-      limit: Number(data.limit_amount),
-    };
-  } else {
-    // Insert new
-    const { data, error } = await supabase
-      .from('budgets')
-      .insert({
-        user_id: userId,
-        category: budget.category,
-        limit_amount: budget.limit,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return {
-      id: data.id,
-      category: data.category,
-      limit: Number(data.limit_amount),
-    };
+    return { id: data.id, category: data.category, limit: Number(data.limit_amount) };
   }
+  const { data, error } = await supabase
+    .from("budgets")
+    .insert({ user_id: userId, category: budget.category, limit_amount: budget.limit })
+    .select("id, category, limit_amount")
+    .single();
+  if (error) throw error;
+  return { id: data.id, category: data.category, limit: Number(data.limit_amount) };
 }
 
 export async function deleteBudget(id: string): Promise<void> {
   const userId = await getCurrentUserId();
-
-  const { error } = await supabase
-    .from('budgets')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId);
-
+  const { error } = await supabase.from("budgets").delete().eq("id", id).eq("user_id", userId);
   if (error) throw error;
 }
 
-// ============================================
-// NOTIFICATIONS
-// ============================================
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+
+function formatTimeAgo(date: Date): string {
+  const s = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
 export async function getNotifications(): Promise<AppNotification[]> {
   const userId = await getCurrentUserId();
-  
   const { data, error } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
+    .from("notifications")
+    .select("id, type, title, message, created_at, read")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
   if (error) throw error;
-
-  return (data || []).map(row => ({
+  return (data || []).map((row) => ({
     id: row.id,
     type: row.type,
     title: row.title,
@@ -434,184 +510,292 @@ export async function getNotifications(): Promise<AppNotification[]> {
 
 export async function markNotificationsRead(): Promise<void> {
   const userId = await getCurrentUserId();
-
   const { error } = await supabase
-    .from('notifications')
+    .from("notifications")
     .update({ read: true })
-    .eq('user_id', userId)
-    .eq('read', false);
-
+    .eq("user_id", userId)
+    .eq("read", false);
   if (error) throw error;
 }
 
-function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
-}
-
-// ============================================
-// SETTINGS
-// ============================================
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
 
 export async function getSettings(): Promise<Settings> {
   const userId = await getCurrentUserId();
-  
   const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .eq('user_id', userId)
+    .from("settings")
+    .select("timezone, date_format, language, default_category")
+    .eq("user_id", userId)
     .single();
-
-  if (error) {
-    // If no settings exist, create default
-    return await createDefaultSettings(userId);
-  }
-
-  // Get user profile for name and email
+  if (error) return createDefaultSettings(userId);
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, email')
-    .eq('id', userId)
+    .from("profiles")
+    .select("name, email, avatar")
+    .eq("id", userId)
     .single();
-
   return {
-    currency: data.currency,
     timezone: data.timezone,
     dateFormat: data.date_format,
     language: data.language,
-    defaultPaymentMethod: data.default_payment_method,
     defaultCategory: data.default_category,
-    name: profile?.name || 'User',
-    email: profile?.email || '',
+    name: profile?.name || "User",
+    email: profile?.email || "",
+    avatar: profile?.avatar || undefined,
   };
 }
 
 async function createDefaultSettings(userId: string): Promise<Settings> {
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, email')
-    .eq('id', userId)
+    .from("profiles")
+    .select("name, email, avatar")
+    .eq("id", userId)
     .single();
-
-  const defaultSettings = {
-    currency: 'USD',
-    timezone: 'America/Los_Angeles',
-    dateFormat: 'MMM d, yyyy',
-    language: 'English',
-    defaultPaymentMethod: 'Debit Card',
-    defaultCategory: 'Food',
-    name: profile?.name || 'User',
-    email: profile?.email || '',
+  const defaults: Settings = {
+    timezone: "America/Los_Angeles",
+    dateFormat: "MMM d, yyyy",
+    language: "English",
+    defaultCategory: "Food",
+    name: profile?.name || "User",
+    email: profile?.email || "",
+    avatar: profile?.avatar || undefined,
   };
-
-  await supabase.from('settings').insert({
+  await supabase.from("settings").insert({
     user_id: userId,
-    currency: defaultSettings.currency,
-    timezone: defaultSettings.timezone,
-    date_format: defaultSettings.dateFormat,
-    language: defaultSettings.language,
-    default_payment_method: defaultSettings.defaultPaymentMethod,
-    default_category: defaultSettings.defaultCategory,
+    timezone: defaults.timezone,
+    date_format: defaults.dateFormat,
+    language: defaults.language,
+    default_category: defaults.defaultCategory,
   });
-
-  return defaultSettings;
+  return defaults;
 }
 
 export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   const userId = await getCurrentUserId();
-
-  // Update settings table
-  const settingsUpdate: any = {};
-  if (patch.currency) settingsUpdate.currency = patch.currency;
-  if (patch.timezone) settingsUpdate.timezone = patch.timezone;
-  if (patch.dateFormat) settingsUpdate.date_format = patch.dateFormat;
-  if (patch.language) settingsUpdate.language = patch.language;
-  if (patch.defaultPaymentMethod) settingsUpdate.default_payment_method = patch.defaultPaymentMethod;
-  if (patch.defaultCategory) settingsUpdate.default_category = patch.defaultCategory;
-
-  if (Object.keys(settingsUpdate).length > 0) {
-    const { error } = await supabase
-      .from('settings')
-      .update(settingsUpdate)
-      .eq('user_id', userId);
-
+  const upd: Record<string, unknown> = {};
+  if (patch.timezone) upd.timezone = patch.timezone;
+  if (patch.dateFormat) upd.date_format = patch.dateFormat;
+  if (patch.language) upd.language = patch.language;
+  if (patch.defaultCategory) upd.default_category = patch.defaultCategory;
+  if (Object.keys(upd).length > 0) {
+    const { error } = await supabase.from("settings").update(upd).eq("user_id", userId);
     if (error) throw error;
   }
-
-  // Update profile if name, email, or avatar changed
   if (patch.name || patch.email || patch.avatar !== undefined) {
-    const profileUpdate: Record<string, unknown> = {};
-    if (patch.name) profileUpdate.name = patch.name;
-    if (patch.email) profileUpdate.email = patch.email;
-    if (patch.avatar !== undefined) profileUpdate.avatar = patch.avatar ?? null;
-
-    const { error } = await supabase
-      .from('profiles')
-      .update(profileUpdate)
-      .eq('id', userId);
-
+    const profileUpd: Record<string, unknown> = {};
+    if (patch.name) profileUpd.name = patch.name;
+    if (patch.email) profileUpd.email = patch.email;
+    if (patch.avatar !== undefined) profileUpd.avatar = patch.avatar ?? null;
+    const { error } = await supabase.from("profiles").update(profileUpd).eq("id", userId);
     if (error) throw error;
   }
-
-  return await getSettings();
+  return getSettings();
 }
 
-// ============================================
-// PAYMENT METHODS
-// ============================================
-
-export async function getPaymentMethods(): Promise<string[]> {
-  const userId = await getCurrentUserId();
-  
-  const { data, error } = await supabase
-    .from('payment_methods')
-    .select('name')
-    .eq('user_id', userId);
-
-  if (error) throw error;
-
-  return (data || []).map(row => row.name);
-}
-
-export async function addPaymentMethod(name: string): Promise<void> {
-  const userId = await getCurrentUserId();
-
-  const { error } = await supabase
-    .from('payment_methods')
-    .insert({
-      user_id: userId,
-      name: name,
-    });
-
-  if (error && error.code !== '23505') { // Ignore duplicate error
-    throw error;
-  }
-}
-
-// ============================================
-// GET ALL APP DATA
-// ============================================
+// ── APP DATA ──────────────────────────────────────────────────────────────────
 
 export async function getAppData() {
-  const [expenses, income, budgets, notifications, paymentMethods, settings] = await Promise.all([
+  const [expenses, income, budgets, notifications, settings] = await Promise.all([
     getExpenses(),
     getIncome(),
     getBudgets(),
     getNotifications(),
-    getPaymentMethods(),
     getSettings(),
   ]);
+  return { expenses, income, budgets, notifications, settings };
+}
 
+// ── SAVINGS ───────────────────────────────────────────────────────────────────
+
+export async function getSavingsGoals(): Promise<SavingsGoal[]> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("savings_goals")
+    .select("id, title, target_amount, current_amount, note, created_at, updated_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    targetAmount: Number(row.target_amount),
+    currentAmount: Number(row.current_amount),
+    note: row.note || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export async function addSavingsGoal(
+  goal: Omit<SavingsGoal, "id" | "createdAt" | "updatedAt">,
+): Promise<SavingsGoal> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("savings_goals")
+    .insert({
+      user_id: userId,
+      title: goal.title,
+      target_amount: goal.targetAmount,
+      current_amount: goal.currentAmount || 0,
+      note: goal.note || null,
+    })
+    .select("id, title, target_amount, current_amount, note, created_at, updated_at")
+    .single();
+  if (error) throw error;
   return {
-    expenses,
-    income,
-    budgets,
-    notifications,
-    paymentMethods,
-    settings,
+    id: data.id,
+    title: data.title,
+    targetAmount: Number(data.target_amount),
+    currentAmount: Number(data.current_amount),
+    note: data.note || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   };
+}
+
+export async function updateSavingsGoal(goal: SavingsGoal): Promise<SavingsGoal> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("savings_goals")
+    .update({
+      title: goal.title,
+      target_amount: goal.targetAmount,
+      current_amount: goal.currentAmount,
+      note: goal.note || null,
+    })
+    .eq("id", goal.id)
+    .eq("user_id", userId)
+    .select("id, title, target_amount, current_amount, note, created_at, updated_at")
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    title: data.title,
+    targetAmount: Number(data.target_amount),
+    currentAmount: Number(data.current_amount),
+    note: data.note || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
+
+export async function deleteSavingsGoal(id: string): Promise<void> {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from("savings_goals")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function addSavingsContribution(
+  contribution: Omit<SavingsContribution, "id" | "createdAt">,
+): Promise<SavingsContribution> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("savings_contributions")
+    .insert({
+      user_id: userId,
+      goal_id: contribution.goalId,
+      amount: contribution.amount,
+      type: contribution.type,
+      date: contribution.date,
+      note: contribution.note || null,
+    })
+    .select("id, goal_id, amount, type, date, note, created_at")
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    goalId: data.goal_id,
+    amount: Number(data.amount),
+    type: data.type,
+    date: data.date,
+    note: data.note || undefined,
+    createdAt: data.created_at,
+  };
+}
+
+export interface ExpenseSummary {
+  totalCount: number;
+  totalAmount: number;
+  maxAmount: number;
+  avgAmount: number;
+}
+
+export async function getExpensesSummary(filters: {
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}): Promise<ExpenseSummary> {
+  const userId = await getCurrentUserId();
+  let query = supabase
+    .from("expenses")
+    .select("amount", { count: "exact" })
+    .eq("user_id", userId)
+    .eq("deleted", false);
+  if (filters.category && filters.category !== "all") {
+    query = query.eq("category", filters.category);
+  }
+  if (filters.dateFrom) {
+    query = query.gte("date", filters.dateFrom);
+  }
+  if (filters.dateTo) {
+    query = query.lte("date", filters.dateTo);
+  }
+  if (filters.search) {
+    query = query.ilike("title", `%${filters.search}%`);
+  }
+  const { data, error, count } = await query;
+  if (error) throw error;
+  const amounts = (data || []).map((row) => Number(row.amount));
+  const totalAmount = amounts.reduce((sum, a) => sum + a, 0);
+  const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
+  const avgAmount = amounts.length > 0 ? totalAmount / amounts.length : 0;
+  return { totalCount: count || 0, totalAmount, maxAmount, avgAmount };
+}
+
+export async function getSavingsContributions(goalId: string): Promise<SavingsContribution[]> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("savings_contributions")
+    .select("id, goal_id, amount, type, date, note, created_at")
+    .eq("user_id", userId)
+    .eq("goal_id", goalId)
+    .order("date", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row) => ({
+    id: row.id,
+    goalId: row.goal_id,
+    amount: Number(row.amount),
+    type: row.type,
+    date: row.date,
+    note: row.note || undefined,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getPaymentHistory(): Promise<PaymentHistory[]> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("payment_history")
+    .select("*")
+    .eq("user_id", userId)
+    .order("payment_date", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row) => ({
+    id: row.id,
+    user_id: row.user_id,
+    subscription_id: row.subscription_id,
+    stripe_payment_intent: row.stripe_payment_intent,
+    invoice_id: row.invoice_id ?? "",
+    receipt_url: row.receipt_url ?? "",
+    invoice_url: row.invoice_url ?? "",
+    amount: Number(row.amount),
+    currency: row.currency,
+    payment_status: row.payment_status,
+    payment_date: row.payment_date,
+    created_at: row.created_at,
+  }));
 }

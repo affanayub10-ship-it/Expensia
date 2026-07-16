@@ -1,13 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="128" fill="url(#grad)" />
-  <g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" transform="translate(96, 96) scale(1.25)">
-    <rect x="16" y="48" width="224" height="160" rx="24" />
-    <path d="M16 96h224M176 128h32v32h-32z" />
-  </g>
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)" />
+
+  <!-- Wallet body -->
+  <rect x="80" y="160" width="352" height="240" rx="32" fill="none" stroke="#ffffff" stroke-width="28" />
+
+  <!-- Wallet flap top -->
+  <path d="M112 160 L112 128 Q112 96 144 96 L368 96 Q400 96 400 128 L400 160" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" />
+
+  <!-- Card slot / pocket on right side -->
+  <rect x="296" y="216" width="112" height="80" rx="20" fill="rgba(255,255,255,0.25)" stroke="#ffffff" stroke-width="20" />
+
+  <!-- Coin circle inside pocket -->
+  <circle cx="352" cy="256" r="20" fill="#ffffff" opacity="0.9" />
 </svg>

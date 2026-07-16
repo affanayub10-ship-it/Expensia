@@ -7,6 +7,7 @@ CREATE TABLE public.profiles (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   avatar TEXT,
+  onboarding_complete BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -15,11 +16,9 @@ CREATE TABLE public.profiles (
 CREATE TABLE public.settings (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  currency TEXT DEFAULT 'USD',
   timezone TEXT DEFAULT 'America/Los_Angeles',
   date_format TEXT DEFAULT 'MMM d, yyyy',
   language TEXT DEFAULT 'English',
-  default_payment_method TEXT DEFAULT 'Debit Card',
   default_category TEXT DEFAULT 'Food',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -31,13 +30,12 @@ CREATE TABLE public.expenses (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
+  description TEXT,
   amount DECIMAL(10, 2) NOT NULL,
   date DATE NOT NULL,
   category TEXT NOT NULL,
-  payment_method TEXT NOT NULL,
-  merchant TEXT,
   location TEXT,
-  currency TEXT DEFAULT 'USD',
+  notes TEXT,
   tags TEXT[] DEFAULT '{}',
   status TEXT DEFAULT 'Paid',
   recurrence TEXT DEFAULT 'None',
@@ -55,7 +53,8 @@ CREATE TABLE public.income (
   amount DECIMAL(10, 2) NOT NULL,
   date DATE NOT NULL,
   category TEXT NOT NULL,
-  currency TEXT DEFAULT 'USD',
+  recurrence TEXT DEFAULT 'One-time',
+  next_date DATE,
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -84,15 +83,6 @@ CREATE TABLE public.notifications (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create payment_methods table
-CREATE TABLE public.payment_methods (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  name TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, name)
-);
-
 -- Create indexes for better query performance
 CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
 CREATE INDEX idx_expenses_date ON public.expenses(date);
@@ -111,7 +101,6 @@ ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.income ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for profiles
 CREATE POLICY "Users can view their own profile" ON public.profiles
@@ -180,16 +169,6 @@ CREATE POLICY "Users can update their own notifications" ON public.notifications
   FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own notifications" ON public.notifications
-  FOR DELETE USING (auth.uid() = user_id);
-
--- RLS Policies for payment_methods
-CREATE POLICY "Users can view their own payment methods" ON public.payment_methods
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own payment methods" ON public.payment_methods
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own payment methods" ON public.payment_methods
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Create function to handle new user creation

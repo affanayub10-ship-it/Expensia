@@ -9,12 +9,16 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar?: string;
+  onboardingComplete?: boolean;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isNewUser: boolean;
+  onboardingComplete: boolean;
+  completeOnboarding: () => Promise<{ success: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -31,6 +35,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   // Check active session and listen for auth changes
   useEffect(() => {
@@ -60,21 +66,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadUserProfile(userId: string) {
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+      // Retry up to 3 times with 500ms delay — handles the race where signup
+      // trigger hasn't created the profile row yet
+      let profile = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+        if (data) { profile = data; break; }
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 600));
+      }
 
       if (profile) {
         setUser({
           email: profile.email,
           name: profile.name,
           avatar: profile.avatar || undefined,
+          onboardingComplete: profile.onboarding_complete || false,
         });
+        setOnboardingComplete(profile.onboarding_complete || false);
+      } else {
+        // Profile doesn't exist yet — treat as new user needing onboarding
+        setOnboardingComplete(false);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
+      setOnboardingComplete(false);
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Register with hybrid system (stores in both places)
       const result = await registerWithStoredCredentials(name, email, password);
+      if (result.success) {
+        // Mark as new user and clear onboarding flag
+        setIsNewUser(true);
+        localStorage.removeItem("onboarding_complete");
+      }
       return result;
     } catch (error: any) {
       return { success: false, error: error.message || "Signup failed" };
@@ -162,9 +186,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function completeOnboarding(): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return { success: false, error: "Not authenticated" };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ onboarding_complete: true })
+        .eq("id", authUser.id);
+
+      if (error) {
+        // Column might not exist yet — run the migration
+        if (error.code === '42703') {
+          console.warn("onboarding_complete column missing. Run supabase-add-onboarding-column.sql");
+          // Still mark locally so the user can proceed
+          setOnboardingComplete(true);
+          setUser((u) => u ? { ...u, onboardingComplete: true } : u);
+          return { success: true };
+        }
+        return { success: false, error: error.message };
+      }
+
+      setOnboardingComplete(true);
+      setUser((u) => u ? { ...u, onboardingComplete: true } : u);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to complete onboarding" };
+    }
+  }
+
   async function logout() {
     await supabase.auth.signOut();
     setUser(null);
+    setOnboardingComplete(false);
   }
 
   return (
@@ -173,6 +228,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        isNewUser,
+        onboardingComplete,
+        completeOnboarding,
         login,
         signup,
         resetPassword,

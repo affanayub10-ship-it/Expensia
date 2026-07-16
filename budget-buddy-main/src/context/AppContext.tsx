@@ -1,14 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  MOCK_EXPENSES,
-  MOCK_INCOME,
-  MOCK_BUDGETS,
-  MOCK_NOTIFICATIONS,
-  PAYMENT_METHODS,
   type Expense,
   type Income,
   type Budget,
   type AppNotification,
+  type SavingsGoal,
+  type SavingsContribution,
 } from "@/lib/mock-data";
 
 type Theme = "light" | "dark";
@@ -23,21 +20,26 @@ interface AppState {
   income: Income[];
   budgets: Budget[];
   notifications: AppNotification[];
-  paymentMethods: string[];
+  savingsGoals: SavingsGoal[];
 
-  addExpense: (e: Expense) => void;
-  updateExpense: (e: Expense) => void;
+  addExpense: (e: Expense) => Promise<Expense>;
+  updateExpense: (e: Expense) => Promise<Expense>;
   deleteExpense: (id: string) => void;
 
-  addIncome: (i: Income) => void;
-  updateIncome: (i: Income) => void;
+  addIncome: (i: Income) => Promise<Income>;
+  updateIncome: (i: Income) => Promise<Income>;
   deleteIncome: (id: string) => void;
 
   saveBudget: (b: Budget) => void;
   deleteBudget: (id: string) => void;
 
-  addPaymentMethod: (name: string) => void;
+  addSavingsGoal: (g: Omit<SavingsGoal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SavingsGoal>;
+  updateSavingsGoal: (g: SavingsGoal) => Promise<SavingsGoal>;
+  deleteSavingsGoal: (id: string) => void;
+  addSavingsContribution: (c: Omit<SavingsContribution, 'id' | 'createdAt'>) => Promise<SavingsContribution>;
+
   markNotificationsRead: () => void;
+  addNotification: (title: string, message: string, type?: AppNotification['type']) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -52,13 +54,26 @@ import {
   deleteIncome as deleteIncomeDb,
   saveBudget as saveBudgetDb,
   deleteBudget as deleteBudgetDb,
-  addPaymentMethod as addPaymentMethodDb,
   updateSettings as updateSettingsDb,
   markNotificationsRead as markNotificationsReadDb,
+  getSavingsGoals,
+  addSavingsGoal as addSavingsGoalDb,
+  updateSavingsGoal as updateSavingsGoalDb,
+  deleteSavingsGoal as deleteSavingsGoalDb,
+  addSavingsContribution as addSavingsContributionDb,
 } from "@/lib/supabase-db";
 import { type Settings } from "@/lib/mock-data";
 import { getDueRecurringIncomes, getNextDate } from "@/lib/income-recurrence";
+import { checkBudgetNotifications, checkSavingsNotifications, type BudgetStatus } from "@/lib/notification-engine";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+
+// Check if we're on a page that doesn't need data loaded
+function isNoDataPage() {
+  if (typeof window === "undefined") return false;
+  const path = window.location.pathname;
+  return path === "/onboarding" || path === "/login";
+}
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -66,11 +81,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings>({
-    currency: "USD",
     timezone: "America/Los_Angeles",
     dateFormat: "MMM d, yyyy",
     language: "English",
-    defaultPaymentMethod: "Debit Card",
     defaultCategory: "Food",
     name: "Alex Morgan",
     email: "alex@example.com",
@@ -80,7 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [income, setIncome] = useState<Income[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem("ems-theme") as Theme | null;
@@ -96,6 +109,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
+  // ── Budget notification checker ───────────────────────────────────────────
+  // Runs whenever expenses or budgets change (e.g. after adding an expense)
+  useEffect(() => {
+    if (!isAuthenticated || budgets.length === 0 || expenses.length === 0) return;
+
+    // Get userId async but keep the rest sync
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      // Calculate spending per category for current month only
+      const now = new Date();
+      const spentByCat = new Map<string, number>();
+      expenses
+        .filter(e => {
+          if (e.deleted) return false;
+          const d = new Date(e.date);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        })
+        .forEach(e => spentByCat.set(e.category, (spentByCat.get(e.category) ?? 0) + e.amount));
+
+      const statuses: BudgetStatus[] = budgets.map(b => {
+        const spent = spentByCat.get(b.category) ?? 0;
+        return { budget: b, spent, pct: b.limit > 0 ? (spent / b.limit) * 100 : 0 };
+      });
+
+      // Only check budgets at 80%+ — synchronous, fast
+      const alertStatuses = statuses.filter(s => s.pct >= 80);
+      if (alertStatuses.length === 0) return;
+
+      const newNotifs = checkBudgetNotifications(alertStatuses, user.id);
+      if (newNotifs.length > 0) {
+        setNotifications(list => {
+          const existingIds = new Set(list.map(n => n.title + '_' + n.message));
+          const unique = newNotifs.filter(n => !existingIds.has(n.title + '_' + n.message));
+          return unique.length > 0 ? [...unique, ...list] : list;
+        });
+      }
+    });
+  }, [expenses, budgets, isAuthenticated]);
+
+  // ── Savings notification checker ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated || savingsGoals.length === 0) return;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      const newNotifs = checkSavingsNotifications(savingsGoals, user.id);
+      if (newNotifs.length > 0) {
+        setNotifications(list => {
+          const existingIds = new Set(list.map(n => n.title + '_' + n.message));
+          const unique = newNotifs.filter(n => !existingIds.has(n.title + '_' + n.message));
+          return unique.length > 0 ? [...unique, ...list] : list;
+        });
+      }
+    });
+  }, [savingsGoals, isAuthenticated]);
+
   useEffect(() => {
     if (authLoading) return;
     
@@ -110,7 +181,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIncome(data.income);
         setBudgets(data.budgets);
         setNotifications(data.notifications);
-        setPaymentMethods(data.paymentMethods);
         setSettings(data.settings);
 
         // Process any due recurring income entries
@@ -120,7 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             try {
               // Find the parent recurring income to advance its nextDate
               const parent = data.income.find(
-                (i) => i.recurrence === newEntry.recurrence &&
+                (i: Income) => i.recurrence === newEntry.recurrence &&
                        i.source === newEntry.source &&
                        i.nextDate === newEntry.date
               );
@@ -145,6 +215,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
           });
         }
+
+        return getSavingsGoals();
+      })
+      .then((savingsData) => {
+        setSavingsGoals(savingsData);
       })
       .catch((err) => {
         console.error("Failed to load app data:", err);
@@ -171,25 +246,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
       income,
       budgets,
       notifications,
-      paymentMethods,
-      addExpense: (e) => {
+      addExpense: async (e) => {
         const tempId = uid();
         const item = { ...e, id: tempId };
         setExpenses((list) => [item, ...list]);
-        addExpenseDb(item).then((res) => {
+        try {
+          const res = await addExpenseDb(item);
           setExpenses((list) => list.map((x) => (x.id === tempId ? res : x)));
-        }).catch(err => {
+          return res;
+        } catch (err) {
           console.error("Failed to add expense:", err);
           setExpenses((list) => list.filter((x) => x.id !== tempId));
-        });
+          throw err;
+        }
       },
-      updateExpense: (e) => {
+      updateExpense: async (e) => {
         const old = expenses.find((x) => x.id === e.id);
         setExpenses((list) => list.map((x) => (x.id === e.id ? e : x)));
-        updateExpenseDb(e).catch(err => {
+        try {
+          await updateExpenseDb(e);
+          return e;
+        } catch (err) {
           console.error("Failed to update expense:", err);
           if (old) setExpenses((list) => list.map((x) => (x.id === e.id ? old : x)));
-        });
+          throw err;
+        }
       },
       deleteExpense: (id) => {
         setExpenses((list) => list.map((x) => (x.id === id ? { ...x, deleted: true } : x)));
@@ -197,24 +278,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.error("Failed to delete expense:", err);
         });
       },
-      addIncome: (i) => {
+      addIncome: async (i) => {
         const tempId = uid();
         const item = { ...i, id: tempId };
         setIncome((list) => [item, ...list]);
-        addIncomeDb(item).then((res) => {
+        try {
+          const res = await addIncomeDb(item);
           setIncome((list) => list.map((x) => (x.id === tempId ? res : x)));
-        }).catch(err => {
+          return res;
+        } catch (err) {
           console.error("Failed to add income:", err);
           setIncome((list) => list.filter((x) => x.id !== tempId));
-        });
+          throw err;
+        }
       },
-      updateIncome: (i) => {
+      updateIncome: async (i) => {
         const old = income.find((x) => x.id === i.id);
         setIncome((list) => list.map((x) => (x.id === i.id ? i : x)));
-        updateIncomeDb(i).catch(err => {
+        try {
+          await updateIncomeDb(i);
+          return i;
+        } catch (err) {
           console.error("Failed to update income:", err);
           if (old) setIncome((list) => list.map((x) => (x.id === i.id ? old : x)));
-        });
+          throw err;
+        }
       },
       deleteIncome: (id) => {
         setIncome((list) => list.filter((x) => x.id !== id));
@@ -249,23 +337,119 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.error("Failed to delete budget:", err);
         });
       },
-      addPaymentMethod: (name) => {
-        setPaymentMethods((list) => (list.includes(name) ? list : [...list, name]));
-        addPaymentMethodDb(name).catch(err => {
-          console.error("Failed to add payment method:", err);
-        });
-      },
       markNotificationsRead: () => {
         setNotifications((list) => list.map((n) => ({ ...n, read: true })));
         markNotificationsReadDb().catch(err => {
           console.error("Failed to mark notifications read:", err);
         });
       },
+      addNotification: (title, message, type = "summary") => {
+        const notif: AppNotification = {
+          id: uid(),
+          type,
+          title,
+          message,
+          time: "just now",
+          read: false,
+        };
+        setNotifications((list) => [notif, ...list]);
+        (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            type,
+            title,
+            message,
+            read: false,
+          });
+        })().catch((_err: unknown) => console.error("Failed to save notification:", _err));
+      },
+      savingsGoals,
+      addSavingsGoal: async (g) => {
+        const tempId = uid();
+        const item = { ...g, id: tempId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        setSavingsGoals((list) => [item, ...list]);
+        try {
+          const res = await addSavingsGoalDb(g);
+          setSavingsGoals((list) => list.map((x) => (x.id === tempId ? res : x)));
+          return res;
+        } catch (err) {
+          console.error("Failed to add savings goal:", err);
+          setSavingsGoals((list) => list.filter((x) => x.id !== tempId));
+          throw err;
+        }
+      },
+      updateSavingsGoal: async (g) => {
+        const old = savingsGoals.find((x) => x.id === g.id);
+        setSavingsGoals((list) => list.map((x) => (x.id === g.id ? g : x)));
+        try {
+          const res = await updateSavingsGoalDb(g);
+          return res;
+        } catch (err) {
+          console.error("Failed to update savings goal:", err);
+          if (old) setSavingsGoals((list) => list.map((x) => (x.id === g.id ? old : x)));
+          throw err;
+        }
+      },
+      deleteSavingsGoal: (id) => {
+        setSavingsGoals((list) => list.filter((x) => x.id !== id));
+        deleteSavingsGoalDb(id).catch(err => {
+          console.error("Failed to delete savings goal:", err);
+        });
+      },
+      addSavingsContribution: async (c) => {
+        try {
+          const res = await addSavingsContributionDb(c);
+          // Update the goal's current amount
+          const goal = savingsGoals.find((g) => g.id === c.goalId);
+          if (goal) {
+            const newAmount = c.type === 'deposit' ? goal.currentAmount + c.amount : goal.currentAmount - c.amount;
+            const updatedGoal = { ...goal, currentAmount: newAmount, updatedAt: new Date().toISOString() };
+            setSavingsGoals((list) => list.map((g) => (g.id === goal.id ? updatedGoal : g)));
+            await updateSavingsGoalDb(updatedGoal);
+
+            // When depositing to savings, create an expense entry to deduct from balance
+            if (c.type === 'deposit') {
+              const savingsExpense = {
+                id: uid(),
+                title: `Savings: ${goal.title}`,
+                amount: c.amount,
+                date: c.date,
+                category: "Savings",
+                status: "Paid" as const,
+                recurrence: "None" as const,
+                tags: ["savings"],
+                deleted: false,
+              };
+              await addExpenseDb(savingsExpense);
+              setExpenses((list) => [savingsExpense, ...list]);
+            }
+            // When withdrawing from savings, create an income entry to add to balance
+            else if (c.type === 'withdrawal') {
+              const savingsIncome = {
+                id: uid(),
+                source: `Savings: ${goal.title}`,
+                amount: c.amount,
+                date: c.date,
+                category: "Savings",
+                recurrence: "One-time" as const,
+              };
+              await addIncomeDb(savingsIncome);
+              setIncome((list) => [savingsIncome, ...list]);
+            }
+          }
+          return res;
+        } catch (err) {
+          console.error("Failed to add savings contribution:", err);
+          throw err;
+        }
+      },
     }),
-    [theme, settings, expenses, income, budgets, notifications, paymentMethods],
+    [theme, settings, expenses, income, budgets, notifications, savingsGoals],
   );
 
-  if (loading) {
+  if (loading && !isNoDataPage()) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <div className="flex flex-col items-center gap-4 text-center">

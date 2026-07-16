@@ -8,7 +8,7 @@ import {
   MOCK_INCOME,
   MOCK_BUDGETS,
   MOCK_NOTIFICATIONS,
-  PAYMENT_METHODS,
+  
   DEFAULT_SETTINGS,
   type Expense,
   type Income,
@@ -58,7 +58,7 @@ async function readDb(): Promise<AppData> {
         income: MOCK_INCOME,
         budgets: MOCK_BUDGETS,
         notifications: MOCK_NOTIFICATIONS,
-        paymentMethods: PAYMENT_METHODS,
+        paymentMethods: [],
         settings: DEFAULT_SETTINGS,
       };
       await writeDb(defaultData);

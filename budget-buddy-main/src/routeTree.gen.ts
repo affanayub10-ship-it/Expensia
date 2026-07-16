@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SavingsRouteImport } from './routes/savings'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PremiumRouteImport } from './routes/premium'
+import { Route as PredictionsRouteImport } from './routes/predictions'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncomeRouteImport } from './routes/income'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as BudgetsRouteImport } from './routes/budgets'
+import { Route as AdminSubscriptionsRouteImport } from './routes/admin-subscriptions'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -22,9 +28,34 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavingsRoute = SavingsRouteImport.update({
+  id: '/savings',
+  path: '/savings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PredictionsRoute = PredictionsRouteImport.update({
+  id: '/predictions',
+  path: '/predictions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -47,6 +78,11 @@ const BudgetsRoute = BudgetsRouteImport.update({
   path: '/budgets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSubscriptionsRoute = AdminSubscriptionsRouteImport.update({
+  id: '/admin-subscriptions',
+  path: '/admin-subscriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,69 +91,111 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/predictions': typeof PredictionsRoute
+  '/premium': typeof PremiumRoute
+  '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/predictions': typeof PredictionsRoute
+  '/premium': typeof PremiumRoute
+  '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/predictions': typeof PredictionsRoute
+  '/premium': typeof PremiumRoute
+  '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
+  '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
     | '/income'
     | '/login'
+    | '/onboarding'
+    | '/predictions'
+    | '/premium'
+    | '/pricing'
     | '/reports'
+    | '/savings'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
     | '/income'
     | '/login'
+    | '/onboarding'
+    | '/predictions'
+    | '/premium'
+    | '/pricing'
     | '/reports'
+    | '/savings'
     | '/settings'
   id:
     | '__root__'
     | '/'
+    | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
     | '/income'
     | '/login'
+    | '/onboarding'
+    | '/predictions'
+    | '/premium'
+    | '/pricing'
     | '/reports'
+    | '/savings'
     | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   BudgetsRoute: typeof BudgetsRoute
   ExpensesRoute: typeof ExpensesRoute
   IncomeRoute: typeof IncomeRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
+  PredictionsRoute: typeof PredictionsRoute
+  PremiumRoute: typeof PremiumRoute
+  PricingRoute: typeof PricingRoute
   ReportsRoute: typeof ReportsRoute
+  SavingsRoute: typeof SavingsRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -130,11 +208,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/savings': {
+      id: '/savings'
+      path: '/savings'
+      fullPath: '/savings'
+      preLoaderRoute: typeof SavingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/predictions': {
+      id: '/predictions'
+      path: '/predictions'
+      fullPath: '/predictions'
+      preLoaderRoute: typeof PredictionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -165,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BudgetsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-subscriptions': {
+      id: '/admin-subscriptions'
+      path: '/admin-subscriptions'
+      fullPath: '/admin-subscriptions'
+      preLoaderRoute: typeof AdminSubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,11 +297,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   BudgetsRoute: BudgetsRoute,
   ExpensesRoute: ExpensesRoute,
   IncomeRoute: IncomeRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
+  PredictionsRoute: PredictionsRoute,
+  PremiumRoute: PremiumRoute,
+  PricingRoute: PricingRoute,
   ReportsRoute: ReportsRoute,
+  SavingsRoute: SavingsRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

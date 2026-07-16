@@ -49,13 +49,12 @@ export interface Database {
           id: string;
           user_id: string;
           title: string;
+          description: string | null;
           amount: number;
           date: string;
           category: string;
-          payment_method: string;
-          merchant: string | null;
           location: string | null;
-          currency: string;
+          notes: string | null;
           tags: string[];
           status: string;
           recurrence: string;
@@ -68,13 +67,12 @@ export interface Database {
           id?: string;
           user_id: string;
           title: string;
+          description?: string | null;
           amount: number;
           date: string;
           category: string;
-          payment_method: string;
-          merchant?: string | null;
           location?: string | null;
-          currency?: string;
+          notes?: string | null;
           tags?: string[];
           status?: string;
           recurrence?: string;
@@ -87,13 +85,12 @@ export interface Database {
           id?: string;
           user_id?: string;
           title?: string;
+          description?: string | null;
           amount?: number;
           date?: string;
           category?: string;
-          payment_method?: string;
-          merchant?: string | null;
           location?: string | null;
-          currency?: string;
+          notes?: string | null;
           tags?: string[];
           status?: string;
           recurrence?: string;
@@ -111,7 +108,8 @@ export interface Database {
           amount: number;
           date: string;
           category: string;
-          currency: string;
+          recurrence: string;
+          next_date: string | null;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -123,7 +121,8 @@ export interface Database {
           amount: number;
           date: string;
           category: string;
-          currency?: string;
+          recurrence?: string;
+          next_date?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -135,7 +134,8 @@ export interface Database {
           amount?: number;
           date?: string;
           category?: string;
-          currency?: string;
+          recurrence?: string;
+          next_date?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -203,11 +203,9 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          currency: string;
           timezone: string;
           date_format: string;
           language: string;
-          default_payment_method: string;
           default_category: string;
           created_at: string;
           updated_at: string;
@@ -215,11 +213,9 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          currency?: string;
           timezone?: string;
           date_format?: string;
           language?: string;
-          default_payment_method?: string;
           default_category?: string;
           created_at?: string;
           updated_at?: string;
@@ -227,34 +223,79 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
-          currency?: string;
           timezone?: string;
           date_format?: string;
           language?: string;
-          default_payment_method?: string;
           default_category?: string;
           created_at?: string;
           updated_at?: string;
         };
       };
-      payment_methods: {
+      savings_goals: {
         Row: {
           id: string;
           user_id: string;
-          name: string;
+          title: string;
+          target_amount: number;
+          current_amount: number;
+          note: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          name: string;
+          title: string;
+          target_amount: number;
+          current_amount?: number;
+          note?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          name?: string;
+          title?: string;
+          target_amount?: number;
+          current_amount?: number;
+          note?: string | null;
           created_at?: string;
+          updated_at?: string;
+        };
+      };
+      savings_contributions: {
+        Row: {
+          id: string;
+          user_id: string;
+          goal_id: string;
+          amount: number;
+          type: string;
+          date: string;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          goal_id: string;
+          amount: number;
+          type: string;
+          date: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          goal_id?: string;
+          amount?: number;
+          type?: string;
+          date?: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

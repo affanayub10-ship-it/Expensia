@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { SubscriptionProvider } from "@/context/SubscriptionContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -81,14 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Expensia — Expense Management System" },
+      { title: "Expensia — Smart Expense Tracker" },
       {
         name: "description",
         content:
           "Track income and expenses, manage budgets, and visualize spending with a clean, modern personal finance dashboard.",
       },
       { name: "author", content: "Expensia" },
-      { property: "og:title", content: "Expensia — Expense Management System" },
+      { property: "og:title", content: "Expensia — Smart Expense Tracker" },
       {
         property: "og:description",
         content:
@@ -102,6 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -149,13 +151,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppProvider>
-          <AppLayout>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </AppLayout>
-          <Toaster richColors position="top-right" />
-        </AppProvider>
+        <SubscriptionProvider>
+          <AppProvider>
+            <AppLayout>
+              <Outlet />
+            </AppLayout>
+            <Toaster richColors position="top-right" />
+          </AppProvider>
+        </SubscriptionProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
