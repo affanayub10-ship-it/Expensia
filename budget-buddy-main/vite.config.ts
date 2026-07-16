@@ -14,5 +14,9 @@ export default defineConfig({
   },
   nitro: {
     preset: "vercel",
+    // Force bundle tslib and other peer dependencies for Vercel
+    externals: {
+      inline: ["tslib", "@radix-ui/react-alert-dialog"],
+    },
   },
 });
