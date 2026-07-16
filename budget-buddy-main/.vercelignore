@@ -1,0 +1,7 @@
+# Don't ignore the build output
+!.vercel/output/**
+
+# Ignore dev files
+*.log
+.env.local
+.DS_Store
