@@ -19,6 +19,7 @@ import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncomeRouteImport } from './routes/income'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin-subscriptions'
@@ -74,6 +75,11 @@ const IncomeRoute = IncomeRouteImport.update({
   path: '/income',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExpensesRoute = ExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
+  '/health': typeof HealthRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
+  '/health': typeof HealthRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/admin-subscriptions': typeof AdminSubscriptionsRoute
   '/budgets': typeof BudgetsRoute
   '/expenses': typeof ExpensesRoute
+  '/health': typeof HealthRoute
   '/income': typeof IncomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
+    | '/health'
     | '/income'
     | '/login'
     | '/onboarding'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
+    | '/health'
     | '/income'
     | '/login'
     | '/onboarding'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/admin-subscriptions'
     | '/budgets'
     | '/expenses'
+    | '/health'
     | '/income'
     | '/login'
     | '/onboarding'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   BudgetsRoute: typeof BudgetsRoute
   ExpensesRoute: typeof ExpensesRoute
+  HealthRoute: typeof HealthRoute
   IncomeRoute: typeof IncomeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/expenses': {
       id: '/expenses'
       path: '/expenses'
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   BudgetsRoute: BudgetsRoute,
   ExpensesRoute: ExpensesRoute,
+  HealthRoute: HealthRoute,
   IncomeRoute: IncomeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
