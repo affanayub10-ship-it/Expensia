@@ -79,6 +79,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (attempt < 2) await new Promise((r) => setTimeout(r, 600));
       }
 
+      if (!profile) {
+        // Try to self-heal: Create profile from Auth user details
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const email = authUser.email || "";
+          const name = authUser.user_metadata?.name || authUser.email?.split('@')[0] || "User";
+          
+          // Try to insert the missing profile
+          const { data: newProfile } = await supabase
+            .from("profiles")
+            .insert({
+              id: userId,
+              name,
+              email,
+              onboarding_complete: false
+            })
+            .select()
+            .single();
+            
+          if (newProfile) {
+            profile = newProfile;
+          } else {
+            // If insert failed (maybe RLS/constraint), construct a local profile object
+            profile = {
+              id: userId,
+              name,
+              email,
+              onboarding_complete: false,
+              avatar: null
+            };
+          }
+        }
+      }
+
       if (profile) {
         setUser({
           email: profile.email,

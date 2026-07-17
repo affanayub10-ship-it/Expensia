@@ -82,6 +82,16 @@ export async function loginWithStoredCredentials(email: string, password: string
     return { success: true, isNewUser: false };
   }
 
+  // If email confirmation is enabled, signInWithPassword will fail with unconfirmed email error
+  const isEmailNotConfirmed = signInError.message.toLowerCase().includes('confirm') || 
+                              signInError.message.toLowerCase().includes('verify');
+  if (isEmailNotConfirmed) {
+    return {
+      success: false,
+      error: "Email confirmation is required. Please check your inbox or disable email confirmation in your Supabase Dashboard (Authentication -> Providers -> Email -> Confirm email)."
+    };
+  }
+
   // If login failed, check if credentials exist in our table (for demo accounts)
   const credCheck = await checkCredentials(normalizedEmail, password);
   
@@ -98,7 +108,14 @@ export async function loginWithStoredCredentials(email: string, password: string
       },
     });
 
-    if (signUpError && !signUpError.message.includes('already registered')) {
+    if (signUpError) {
+      if (signUpError.message.includes('already registered')) {
+        // If user already exists in auth but signIn failed, passwords must be out of sync
+        return {
+          success: false,
+          error: "Invalid email or password. (Note: Database and Supabase Auth credentials might be out of sync for this account. Please delete the user from Supabase Dashboard and try again.)"
+        };
+      }
       return { success: false, error: signUpError.message };
     }
 
@@ -109,6 +126,14 @@ export async function loginWithStoredCredentials(email: string, password: string
     });
 
     if (retryError) {
+      const retryEmailUnconfirmed = retryError.message.toLowerCase().includes('confirm') || 
+                                    retryError.message.toLowerCase().includes('verify');
+      if (retryEmailUnconfirmed) {
+        return {
+          success: false,
+          error: "Email confirmation is required. Please check your inbox or disable email confirmation in your Supabase Dashboard (Authentication -> Providers -> Email -> Confirm email)."
+        };
+      }
       return { success: false, error: retryError.message };
     }
 
@@ -116,7 +141,7 @@ export async function loginWithStoredCredentials(email: string, password: string
   }
 
   // Neither Supabase Auth nor stored credentials worked
-  return { success: false, error: 'Invalid email or password' };
+  return { success: false, error: signInError.message || 'Invalid email or password' };
 }
 
 /**
@@ -183,6 +208,14 @@ export async function registerWithStoredCredentials(
   });
 
   if (loginError) {
+    const isEmailNotConfirmed = loginError.message.toLowerCase().includes('confirm') || 
+                                loginError.message.toLowerCase().includes('verify');
+    if (isEmailNotConfirmed) {
+      return { 
+        success: true, 
+        error: 'Account created! Please check your email to verify your account or disable email confirmation in your Supabase Dashboard.' 
+      };
+    }
     // Signup succeeded but auto-login failed
     return { 
       success: true, 

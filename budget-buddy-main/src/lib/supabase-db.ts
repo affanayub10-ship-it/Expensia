@@ -527,17 +527,53 @@ export async function getSettings(): Promise<Settings> {
     .select("timezone, date_format, language, default_category")
     .eq("user_id", userId)
     .single();
-  if (error) return createDefaultSettings(userId);
-  const { data: profile } = await supabase
+  
+  const settingsData = error ? await createDefaultSettings(userId) : data;
+
+  let profile = null;
+  const { data: profileData } = await supabase
     .from("profiles")
     .select("name, email, avatar")
     .eq("id", userId)
     .single();
+
+  if (profileData) {
+    profile = profileData;
+  } else {
+    // Self-heal: Create profile from Auth user details if missing in profiles table
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const email = authUser.email || "";
+        const name = authUser.user_metadata?.name || authUser.email?.split('@')[0] || "User";
+        
+        const { data: newProfile } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            name,
+            email,
+            onboarding_complete: false
+          })
+          .select()
+          .single();
+          
+        if (newProfile) {
+          profile = newProfile;
+        } else {
+          profile = { name, email, avatar: null };
+        }
+      }
+    } catch (err) {
+      console.error("Failed to self-heal profile inside getSettings:", err);
+    }
+  }
+
   return {
-    timezone: data.timezone,
-    dateFormat: data.date_format,
-    language: data.language,
-    defaultCategory: data.default_category,
+    timezone: settingsData.timezone,
+    dateFormat: settingsData.date_format,
+    language: settingsData.language,
+    defaultCategory: settingsData.default_category,
     name: profile?.name || "User",
     email: profile?.email || "",
     avatar: profile?.avatar || undefined,
@@ -545,11 +581,45 @@ export async function getSettings(): Promise<Settings> {
 }
 
 async function createDefaultSettings(userId: string): Promise<Settings> {
-  const { data: profile } = await supabase
+  let profile = null;
+  const { data: profileData } = await supabase
     .from("profiles")
     .select("name, email, avatar")
     .eq("id", userId)
     .single();
+
+  if (profileData) {
+    profile = profileData;
+  } else {
+    // Try to get auth user details and auto-create the missing profile
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const email = authUser.email || "";
+        const name = authUser.user_metadata?.name || authUser.email?.split('@')[0] || "User";
+        
+        const { data: newProfile } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            name,
+            email,
+            onboarding_complete: false
+          })
+          .select()
+          .single();
+          
+        if (newProfile) {
+          profile = newProfile;
+        } else {
+          profile = { name, email, avatar: null };
+        }
+      }
+    } catch (err) {
+      console.error("Failed to self-heal profile inside createDefaultSettings:", err);
+    }
+  }
+
   const defaults: Settings = {
     timezone: "America/Los_Angeles",
     dateFormat: "MMM d, yyyy",
@@ -559,6 +629,7 @@ async function createDefaultSettings(userId: string): Promise<Settings> {
     email: profile?.email || "",
     avatar: profile?.avatar || undefined,
   };
+
   await supabase.from("settings").insert({
     user_id: userId,
     timezone: defaults.timezone,
@@ -566,6 +637,7 @@ async function createDefaultSettings(userId: string): Promise<Settings> {
     language: defaults.language,
     default_category: defaults.defaultCategory,
   });
+
   return defaults;
 }
 
