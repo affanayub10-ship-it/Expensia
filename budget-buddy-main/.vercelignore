@@ -1,8 +1,0 @@
-# Don't ignore the build output
-!.output/**
-
-# Ignore dev files
-*.log
-.env.local
-.DS_Store
-node_modules

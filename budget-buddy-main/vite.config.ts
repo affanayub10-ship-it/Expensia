@@ -7,25 +7,9 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  nitro: {
-    preset: "vercel",
-    // Force ALL external dependencies to be bundled inline
-    externals: {
-      inline: true,
-      // Also explicitly list problematic packages
-      traceInclude: [
-        'tslib',
-        '@radix-ui/**',
-      ],
-    },
-    // Ensure side effects are preserved during bundling
-    moduleSideEffects: true,
-    rollupConfig: {
-      output: {
-        format: "esm",
-      },
-      // Bundle everything, including node_modules
-      external: [],
-    },
+  tanstackStart: {
+    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
+    // nitro/vite builds from this
+    server: { entry: "server" },
   },
 });
