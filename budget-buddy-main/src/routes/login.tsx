@@ -60,6 +60,7 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isResetSent, setIsResetSent] = useState(false);
+  const [isSignupSuccess, setIsSignupSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -75,6 +76,7 @@ function LoginPage() {
     setError("");
     setIsLoading(false);
     setIsResetSent(false);
+    setIsSignupSuccess(false);
     setPassword("");
     setConfirmPassword("");
     if (newMode === "login" || newMode === "forgot") {
@@ -116,7 +118,8 @@ function LoginPage() {
 
       const result = await signup(name, email, password);
       if (result.success) {
-        await navigate({ to: "/onboarding" });
+        setIsSignupSuccess(true);
+        setIsLoading(false);
       } else {
         setError(result.error ?? "Registration failed. Please try again.");
         setIsLoading(false);
@@ -765,13 +768,28 @@ function LoginPage() {
                   We've sent a password recovery link to <strong>{email}</strong>.
                 </p>
               </div>
+            ) : mode === "signup" && isSignupSuccess ? (
+              <div className="login-success-box text-center flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl shadow-soft">
+                <CheckCircle2 size={48} className="text-emerald-500 animate-bounce mb-3" />
+                <h3 className="login-success-title text-lg font-bold text-foreground mb-1">Verify your email</h3>
+                <p className="login-success-desc text-sm text-muted-foreground mb-4">
+                  We've sent a verification link to <strong>{email}</strong>. Please check your inbox and verify your email before logging in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("login")}
+                  className="login-btn flex items-center justify-center gap-2 mt-2 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 transition-colors"
+                >
+                  <ArrowLeft size={14} /> Back to Sign In
+                </button>
+              </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate>
                 {/* Full Name field (signup mode only) */}
                 {mode === "signup" && (
                   <div className="login-field">
                     <label htmlFor="login-name" className="login-label">
-                      Full name
+                      Full name <span className="text-rose-500 font-bold ml-0.5">*</span>
                     </label>
                     <div className="login-input-wrap">
                       <User className="login-input-icon" />
@@ -794,7 +812,7 @@ function LoginPage() {
                 {/* Email Address (all modes) */}
                 <div className="login-field">
                   <label htmlFor="login-email" className="login-label">
-                    Email address
+                    Email address {mode === "signup" && <span className="text-rose-500 font-bold ml-0.5">*</span>}
                   </label>
                   <div className="login-input-wrap">
                     <Mail className="login-input-icon" />
@@ -819,7 +837,7 @@ function LoginPage() {
                 {mode !== "forgot" && (
                   <div className="login-field">
                     <label htmlFor="login-password" className="login-label">
-                      Password
+                      Password {mode === "signup" && <span className="text-rose-500 font-bold ml-0.5">*</span>}
                     </label>
                     <div className="login-input-wrap">
                       <Lock className="login-input-icon" />
@@ -852,7 +870,7 @@ function LoginPage() {
                 {mode === "signup" && (
                   <div className="login-field">
                     <label htmlFor="login-confirm-password" className="login-label">
-                      Confirm password
+                      Confirm password <span className="text-rose-500 font-bold ml-0.5">*</span>
                     </label>
                     <div className="login-input-wrap">
                       <Lock className="login-input-icon" />

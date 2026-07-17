@@ -77,8 +77,36 @@ export async function loginWithStoredCredentials(email: string, password: string
     password,
   });
 
-  // If login successful, we're done!
+  // If login successful, check verification status
   if (!signInError) {
+    // Check if it's a demo account
+    const { data: cred } = await supabase
+      .from("user_credentials")
+      .select("is_demo")
+      .eq("email", normalizedEmail)
+      .single();
+    const isDemoAccount = cred?.is_demo === true;
+
+    if (!isDemoAccount) {
+      // Query the verified column from profiles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("verified")
+        .eq("id", signInData.user.id)
+        .single();
+
+      const isEmailConfirmed = !!signInData.user.email_confirmed_at;
+
+      // If email is not confirmed or verified column is false, block access
+      if (!isEmailConfirmed || (profile && profile.verified === false)) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: "Your email address is not verified. Please check your inbox and verify your email before logging in."
+        };
+      }
+    }
+
     return { success: true, isNewUser: false };
   }
 
@@ -169,7 +197,7 @@ export async function registerWithStoredCredentials(
     password,
     options: {
       data: { name },
-      emailRedirectTo: undefined, // Don't require email confirmation
+      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/verify` : undefined,
     },
   });
 
