@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Crown, Sparkles, Check, Loader2, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
@@ -131,7 +131,7 @@ export function PremiumUpgradeModal({ open, onClose }: { open: boolean; onClose:
             Maybe Later
           </Button>
           <button
-            onClick={() => { onClose(); navigate({ to: "/premium" }); }}
+            onClick={() => { onClose(); navigate("/premium"); }}
             className="inline-flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Compare plans <ArrowRight className="h-3 w-3" />

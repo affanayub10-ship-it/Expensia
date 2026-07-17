@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   ArrowDownCircle,
@@ -96,12 +96,13 @@ function NotificationBell() {
 
 const PREMIUM_ROUTES = new Set(["/budgets", "/savings", "/predictions"]);
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout() {
   const { theme, toggleTheme, settings } = useApp();
   const { isAuthenticated, isLoading, logout, onboardingComplete } = useAuth();
   const { isPremium } = useSubscription();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const location = useLocation();
+  const pathname = location.pathname;
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -126,27 +127,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
   if (isLoading) return null;
 
   if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
-    setTimeout(() => navigate({ to: "/login" }), 0);
+    setTimeout(() => navigate("/login"), 0);
     return null;
   }
 
   // Authenticated but onboarding not done — must complete it first
   if (isAuthenticated && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
-    setTimeout(() => navigate({ to: "/onboarding" }), 0);
+    setTimeout(() => navigate("/onboarding"), 0);
     return null;
   }
   
   // SECURITY: If password reset is in progress, force user back to reset page
   if (isPasswordResetInProgress && !isResetPasswordPage) {
-    setTimeout(() => navigate({ to: "/reset-password" }), 0);
+    setTimeout(() => navigate("/reset-password"), 0);
     return null;
   }
 
-  if (isLoginPage || isOnboardingPage || isResetPasswordPage) return <>{children}</>;
+  if (isLoginPage || isOnboardingPage || isResetPasswordPage) return <Outlet />;
 
   function handleSignOut() {
     logout();
-    void navigate({ to: "/login" });
+    navigate("/login");
   }
 
   // Reusable avatar component used in sidebar + header
@@ -285,7 +286,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:pb-10">
-          {children}
+          <Outlet />
         </main>
       </div>
 
