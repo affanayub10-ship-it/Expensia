@@ -98,7 +98,7 @@ const PREMIUM_ROUTES = new Set(["/budgets", "/savings", "/predictions"]);
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme, settings } = useApp();
-  const { isAuthenticated, isLoading, logout, onboardingComplete } = useAuth();
+  const { isAuthenticated, isLoading, logout, onboardingComplete, user } = useAuth();
   const { isPremium } = useSubscription();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -110,6 +110,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const isLoginPage = pathname === "/login";
   const isOnboardingPage = pathname === "/onboarding";
   const isResetPasswordPage = pathname === "/reset-password";
+  const isVerifyPage = pathname === "/verify";
+  const isVerifyEmailPage = pathname === "/verify-email";
 
   const initials = settings.name
     .split(" ")
@@ -121,18 +123,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   if (isLoading) return null;
 
-  if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
+  // Unauthenticated user redirection
+  if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
     setTimeout(() => navigate({ to: "/login" }), 0);
     return null;
   }
 
-  // Authenticated but onboarding not done — must complete it first
-  if (isAuthenticated && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
+  // Authenticated but email unverified redirection
+  if (isAuthenticated && user && user.verified === false && !isVerifyEmailPage && !isVerifyPage) {
+    setTimeout(() => navigate({ to: "/verify-email" }), 0);
+    return null;
+  }
+
+  // Authenticated but onboarding not done redirection
+  if (isAuthenticated && user?.verified !== false && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
     setTimeout(() => navigate({ to: "/onboarding" }), 0);
     return null;
   }
 
-  if (isLoginPage || isOnboardingPage || isResetPasswordPage) return <>{children}</>;
+  if (isLoginPage || isOnboardingPage || isResetPasswordPage || isVerifyPage || isVerifyEmailPage) return <>{children}</>;
 
   function handleSignOut() {
     logout();

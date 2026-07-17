@@ -10,6 +10,7 @@ export interface AuthUser {
   name: string;
   avatar?: string;
   onboardingComplete?: boolean;
+  verified?: boolean;
 }
 
 interface AuthContextValue {
@@ -127,20 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Ignore
         }
 
-        // If the user is not verified and not a demo account, log them out and block access
-        if (profile.verified === false && !isDemoAccount) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setOnboardingComplete(false);
-          setIsLoading(false);
-          return;
-        }
-
         setUser({
           email: profile.email,
           name: profile.name,
           avatar: profile.avatar || undefined,
           onboardingComplete: profile.onboarding_complete || false,
+          verified: isDemoAccount ? true : (profile.verified || false),
         });
         setOnboardingComplete(profile.onboarding_complete || false);
       } else {

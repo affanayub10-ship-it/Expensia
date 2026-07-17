@@ -80,9 +80,6 @@ function VerifyPage() {
           }
         }
 
-        // Sign out user so they are not auto-logged in, forcing manual login on the login page
-        await supabase.auth.signOut();
-
         if (active) {
           setStatus("success");
         }
@@ -275,11 +272,11 @@ function VerifyPage() {
             </div>
             <h2 className="text-2xl font-extrabold text-emerald-400 tracking-tight mt-1">Verification Successful!</h2>
             <p className="text-sm text-zinc-300 max-w-xs mt-2">
-              You are verified! Now login easily.
+              Your email has been verified. You can now access your dashboard.
             </p>
-            <Link to="/login" className="w-full">
+            <Link to="/" className="w-full">
               <button className="verify-btn">
-                <LogIn className="h-4 w-4" /> Go to Login
+                Go to Dashboard <ArrowRight className="h-4 w-4" />
               </button>
             </Link>
           </div>

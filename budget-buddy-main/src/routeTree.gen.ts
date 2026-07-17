@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SavingsRouteImport } from './routes/savings'
@@ -25,6 +26,11 @@ import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin-subscriptions'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
   '/verify': typeof VerifyRoute
+  '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
   '/verify': typeof VerifyRoute
+  '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/savings': typeof SavingsRoute
   '/settings': typeof SettingsRoute
   '/verify': typeof VerifyRoute
+  '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/settings'
     | '/verify'
+    | '/verify-email'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/settings'
     | '/verify'
+    | '/verify-email'
   id:
     | '__root__'
     | '/'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/settings'
     | '/verify'
+    | '/verify-email'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,10 +235,18 @@ export interface RootRouteChildren {
   SavingsRoute: typeof SavingsRoute
   SettingsRoute: typeof SettingsRoute
   VerifyRoute: typeof VerifyRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -351,6 +371,7 @@ const rootRouteChildren: RootRouteChildren = {
   SavingsRoute: SavingsRoute,
   SettingsRoute: SettingsRoute,
   VerifyRoute: VerifyRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
