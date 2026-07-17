@@ -11,10 +11,10 @@
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false;
 
--- 2. Mark existing users as verified (so they don't get locked out)
+-- 2. Mark existing users as unverified by default so they must verify
 UPDATE public.profiles 
-SET verified = true 
-WHERE verified IS NULL OR verified = false;
+SET verified = false;
+
 
 -- 3. Update the handle_new_user trigger function to set verified to false by default
 -- (and make it respect the default value of the column)
