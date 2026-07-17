@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { CheckCircle2, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
+import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/verify")({
@@ -37,9 +37,7 @@ function VerifyPage() {
           if (user) {
             await verifyUser(user.id);
           } else {
-            // Check if we are already verified (by checking if URL hash is empty but we don't have session)
-            // Or if they are already logged in in some other way.
-            // If nothing is found after 3 seconds, we show the login redirect
+            // Check if nothing is found after 3 seconds, show verification error
             setTimeout(() => {
               if (active && status === "loading") {
                 setStatus("error");
@@ -82,14 +80,11 @@ function VerifyPage() {
           }
         }
 
+        // Sign out user so they are not auto-logged in, forcing manual login on the login page
+        await supabase.auth.signOut();
+
         if (active) {
           setStatus("success");
-          // Beautiful delay before redirecting to dashboard
-          setTimeout(() => {
-            if (active) {
-              navigate({ to: "/" });
-            }
-          }, 3200);
         }
       } catch (err: any) {
         if (active) {
@@ -231,6 +226,27 @@ function VerifyPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+
+        .verify-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          padding: 0.75rem 1.5rem;
+          font-weight: 600;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: opacity 0.2s;
+          margin-top: 1.5rem;
+        }
+        .verify-btn:hover {
+          opacity: 0.95;
+        }
       `}</style>
 
       {/* Background orbs */}
@@ -259,11 +275,13 @@ function VerifyPage() {
             </div>
             <h2 className="text-2xl font-extrabold text-emerald-400 tracking-tight mt-1">Verification Successful!</h2>
             <p className="text-sm text-zinc-300 max-w-xs mt-2">
-              Your email has been confirmed. You will be redirected to the app dashboard momentarily.
+              You are verified! Now login easily.
             </p>
-            <div className="flex items-center gap-2 text-xs text-emerald-500/80 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full mt-4 animate-pulse">
-              <span>Syncing secure profile...</span>
-            </div>
+            <Link to="/login" className="w-full">
+              <button className="verify-btn">
+                <LogIn className="h-4 w-4" /> Go to Login
+              </button>
+            </Link>
           </div>
         )}
 
