@@ -109,6 +109,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const isLoginPage = pathname === "/login";
   const isOnboardingPage = pathname === "/onboarding";
+  const isResetPasswordPage = pathname === "/reset-password";
 
   const initials = settings.name
     .split(" ")
@@ -120,18 +121,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   if (isLoading) return null;
 
-  if (!isAuthenticated && !isLoginPage && !isOnboardingPage) {
+  if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
     setTimeout(() => navigate({ to: "/login" }), 0);
     return null;
   }
 
   // Authenticated but onboarding not done — must complete it first
-  if (isAuthenticated && !onboardingComplete && !isLoginPage && !isOnboardingPage) {
+  if (isAuthenticated && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage) {
     setTimeout(() => navigate({ to: "/onboarding" }), 0);
     return null;
   }
 
-  if (isLoginPage || isOnboardingPage) return <>{children}</>;
+  if (isLoginPage || isOnboardingPage || isResetPasswordPage) return <>{children}</>;
 
   function handleSignOut() {
     logout();
