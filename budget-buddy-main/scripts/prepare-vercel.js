@@ -1,56 +1,29 @@
-import { copyFileSync, mkdirSync, writeFileSync, existsSync, cpSync } from 'fs';
+import { copyFileSync, mkdirSync, writeFileSync, existsSync, cpSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 console.log('📦 Preparing Vercel output structure...');
 
 const root = process.cwd();
 const vercelOutput = join(root, '.vercel', 'output');
-const nitroOutput = join(root, '.output');
 
-// Ensure .vercel/output exists
-mkdirSync(vercelOutput, { recursive: true });
+// Check what Nitro actually created
+console.log('Contents of .vercel/output:', readdirSync(vercelOutput));
 
-// Create Vercel Build Output API v3 config
-const config = {
-  version: 3,
-  routes: [
-    {
-      src: '/(.*)',
-      dest: '/__nitro'
-    }
-  ]
-};
+// Nitro with vercel preset already creates the correct structure
+// We just need to ensure the config.json exists with proper routing
 
-writeFileSync(
-  join(vercelOutput, 'config.json'),
-  JSON.stringify(config, null, 2)
-);
+const configPath = join(vercelOutput, 'config.json');
 
-console.log('✅ Created config.json');
-
-// Copy Nitro's function output to Vercel's expected location
-const nitroServerOutput = join(nitroOutput, 'server');
-const vercelFunctionOutput = join(vercelOutput, 'functions', '__nitro.func');
-
-if (existsSync(nitroServerOutput)) {
-  mkdirSync(vercelFunctionOutput, { recursive: true });
+if (!existsSync(configPath)) {
+  const config = {
+    version: 3
+  };
   
-  // Copy server files
-  cpSync(nitroServerOutput, vercelFunctionOutput, { recursive: true });
-  
-  console.log('✅ Copied serverless function');
+  writeFileSync(configPath, JSON.stringify(config, null, 2));
+  console.log('✅ Created config.json');
 } else {
-  console.error('❌ Nitro server output not found!');
-  process.exit(1);
+  console.log('✅ config.json already exists');
 }
 
-// Copy static assets
-const nitroPublicOutput = join(nitroOutput, 'public');
-const vercelStaticOutput = join(vercelOutput, 'static');
+console.log('🎉 Vercel output structure ready!');
 
-if (existsSync(nitroPublicOutput)) {
-  cpSync(nitroPublicOutput, vercelStaticOutput, { recursive: true });
-  console.log('✅ Copied static assets');
-}
-
-console.log('🎉 Vercel output structure prepared successfully!');
