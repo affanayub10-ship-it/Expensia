@@ -24,6 +24,19 @@ function VerifyPage() {
 
     const checkAndVerify = async () => {
       try {
+        // 1. Check if there is a 'code' query parameter in the URL (Supabase PKCE flow)
+        if (typeof window !== "undefined") {
+          const urlParams = new URLSearchParams(window.location.search);
+          const code = urlParams.get("code");
+          if (code) {
+            const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (!exchangeError && exchangeData?.session?.user) {
+              await verifyUser(exchangeData.session.user.id);
+              return;
+            }
+          }
+        }
+
         // Wait 1 second to allow Supabase to process URL hash parameter tokens
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (!active) return;
