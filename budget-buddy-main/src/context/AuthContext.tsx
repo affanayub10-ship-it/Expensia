@@ -114,6 +114,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (profile) {
+        // Check if this is a demo account
+        let isDemoAccount = false;
+        try {
+          const { data: cred } = await supabase
+            .from("user_credentials")
+            .select("is_demo")
+            .eq("email", profile.email)
+            .single();
+          isDemoAccount = cred?.is_demo === true;
+        } catch (e) {
+          // Ignore
+        }
+
+        // If the user is not verified and not a demo account, log them out and block access
+        if (profile.verified === false && !isDemoAccount) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setOnboardingComplete(false);
+          setIsLoading(false);
+          return;
+        }
+
         setUser({
           email: profile.email,
           name: profile.name,
