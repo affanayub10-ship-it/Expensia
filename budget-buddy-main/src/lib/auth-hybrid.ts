@@ -174,8 +174,8 @@ export async function registerWithStoredCredentials(
   });
 
   if (signUpError) {
-    if (signUpError.message.includes('already registered')) {
-      return { success: false, error: 'Email already registered. Try logging in instead.' };
+    if (signUpError.message.includes('already registered') || signUpError.message.includes('already exists')) {
+      return { success: false, error: 'This email is already registered. Try logging in instead.' };
     }
     return { success: false, error: signUpError.message };
   }
@@ -190,39 +190,19 @@ export async function registerWithStoredCredentials(
         name,
         is_demo: false,
       });
-    
-    // Also store in profiles table if it exists
-    await supabase
-      .from('profiles')
-      .update({ password })
-      .eq('email', normalizedEmail);
   } catch (insertError) {
     console.error('Error storing credentials (non-critical):', insertError);
     // Don't fail signup if credential storage fails
   }
 
-  // Auto-login after signup
-  const { error: loginError } = await supabase.auth.signInWithPassword({
-    email: normalizedEmail,
-    password,
-  });
-
-  if (loginError) {
-    const isEmailNotConfirmed = loginError.message.toLowerCase().includes('confirm') || 
-                                loginError.message.toLowerCase().includes('verify');
-    if (isEmailNotConfirmed) {
-      return { 
-        success: true, 
-        error: 'Account created! Please check your email to verify your account or disable email confirmation in your Supabase Dashboard.' 
-      };
-    }
-    // Signup succeeded but auto-login failed
-    return { 
-      success: true, 
-      error: 'Account created! Please login manually.' 
-    };
+  // If Supabase returned a session directly, it means email confirmation is OFF
+  // The user is already signed in - return success to let the layout handle routing
+  if (signUpData?.session) {
+    return { success: true };
   }
 
+  // Email confirmation is ON - signUp sent a verification email
+  // Return success so UI shows the verify-email waiting room
   return { success: true };
 }
 
