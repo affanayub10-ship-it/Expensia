@@ -13,6 +13,7 @@ import {
   User,
   ArrowLeft,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -800,13 +801,24 @@ function LoginPage() {
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   {email}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleModeChange("login")}
-                  className="mt-4 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-2"
-                >
-                  Return to Sign In
-                </button>
+                 <div className="flex w-full gap-2 mt-4">
+                  <a
+                    href="https://mail.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 px-4 py-3 text-sm font-semibold text-primary transition-all flex items-center justify-center gap-2 select-none"
+                  >
+                    Open Gmail
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange("login")}
+                    className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-2 select-none"
+                  >
+                    Sign In
+                  </button>
+                </div>
               </div>
             ) : mode === "forgot" && isResetSent ? (
               <div className="login-success-box">

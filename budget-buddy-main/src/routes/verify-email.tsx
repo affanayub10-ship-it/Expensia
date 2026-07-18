@@ -11,7 +11,8 @@ import {
   AlertTriangle, 
   CheckCircle,
   Clock,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -393,6 +394,22 @@ function VerifyEmailPage() {
         </div>
 
         <div className="flex flex-col gap-3">
+          {/* Open Gmail Shortcut Button */}
+          <a
+            href="https://mail.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-verify-primary flex items-center justify-center gap-2 select-none"
+            style={{
+              background: "linear-gradient(90deg, #4f46e5 0%, #312e81 100%)",
+              boxShadow: "0 4px 15px -3px rgba(79, 70, 229, 0.4)",
+            }}
+          >
+            <Mail className="h-5 w-5" />
+            Open Gmail to Verify
+            <ExternalLink className="h-4 w-4 opacity-80" />
+          </a>
+
           {/* Main Action: I've Verified My Email */}
           <button 
             onClick={handleCheckVerificationStatus}
