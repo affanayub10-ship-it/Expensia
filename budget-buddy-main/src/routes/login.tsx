@@ -159,11 +159,25 @@ function LoginPage() {
     }
   }
 
-  function fillDemo(demoEmail: string, demoPassword: string) {
+  async function fillDemo(demoEmail: string, demoPassword: string) {
     setEmail(demoEmail);
     setPassword(demoPassword);
     setError("");
     setMode("login");
+    setIsLoading(true);
+    try {
+      const result = await login(demoEmail, demoPassword);
+      if (result.success) {
+        toast.success("Successfully logged in to demo account!", { duration: 3000 });
+        await navigate({ to: "/" });
+      } else {
+        setError(result.error ?? "Demo login failed.");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+      setIsLoading(false);
+    }
   }
 
   return (
