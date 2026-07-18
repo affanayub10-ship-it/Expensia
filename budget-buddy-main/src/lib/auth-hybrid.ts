@@ -154,16 +154,24 @@ export async function registerWithStoredCredentials(
 ): Promise<{
   success: boolean;
   error?: string;
+  alreadyRegisteredUnverified?: boolean;
 }> {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Check if email already exists in Supabase Auth
-  const { data: existingAuth } = await supabase.auth.signInWithPassword({
-    email: normalizedEmail,
-    password: 'test', // Just testing if user exists
-  });
+  // Check if email already exists in profiles table (safer than signInWithPassword)
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (existingProfile) {
+    return { success: false, error: 'This email is already registered. Try logging in instead.' };
+  }
 
   // Create user in Supabase Auth
+  // NOTE: If SMTP is not configured, Supabase will silently succeed but NOT send email.
+  // Make sure: Dashboard → Auth → SMTP is configured and "Confirm email" is ON.
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
@@ -174,10 +182,28 @@ export async function registerWithStoredCredentials(
   });
 
   if (signUpError) {
-    if (signUpError.message.includes('already registered') || signUpError.message.includes('already exists')) {
+    if (
+      signUpError.message.includes('already registered') ||
+      signUpError.message.includes('already exists') ||
+      signUpError.message.includes('User already registered')
+    ) {
       return { success: false, error: 'This email is already registered. Try logging in instead.' };
     }
     return { success: false, error: signUpError.message };
+  }
+
+  // Supabase returns a fake-success with identities=[] when the email already
+  // exists as an UNVERIFIED user. No email is sent in this case.
+  if (
+    signUpData?.user &&
+    Array.isArray(signUpData.user.identities) &&
+    signUpData.user.identities.length === 0
+  ) {
+    return {
+      success: false,
+      alreadyRegisteredUnverified: true,
+      error: 'An account with this email already exists but is not verified. Please check your inbox for the original verification email, or use the login page to resend it.',
+    };
   }
 
   // Store credentials in database for easy access
@@ -195,14 +221,12 @@ export async function registerWithStoredCredentials(
     // Don't fail signup if credential storage fails
   }
 
-  // If Supabase returned a session directly, it means email confirmation is OFF
-  // The user is already signed in - return success to let the layout handle routing
+  // If Supabase returned a session directly, email confirmation is OFF
   if (signUpData?.session) {
     return { success: true };
   }
 
-  // Email confirmation is ON - signUp sent a verification email
-  // Return success so UI shows the verify-email waiting room
+  // Email confirmation is ON — Supabase sent the verification email
   return { success: true };
 }
 
