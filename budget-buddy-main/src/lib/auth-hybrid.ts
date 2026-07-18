@@ -149,24 +149,28 @@ export async function loginWithStoredCredentials(email: string, password: string
  */
 /**
  * Validate password rules:
- * - Length: 12-50 characters
- * - Allow all printable characters
- * - Must contain at least 2 alphabetic characters (a-z, A-Z) and 2 numbers (0-9)
+ * - Length: 9-25 characters
+ * - Must contain at least 2 alphabetic characters (a-z, A-Z), 1 number (0-9), and 1 special character
  */
 export function validatePassword(password: string): { valid: boolean; error?: string } {
-  if (password.length < 12 || password.length > 50) {
-    return { valid: false, error: "Password must be between 12 and 50 characters long." };
+  if (password.length < 9 || password.length > 25) {
+    return { valid: false, error: "Password must be between 9 and 25 characters long." };
   }
 
   const alphabets = password.match(/[a-zA-Z]/g) || [];
   const numbers = password.match(/[0-9]/g) || [];
+  const specialChars = password.match(/[^a-zA-Z0-9]/g) || [];
 
   if (alphabets.length < 2) {
     return { valid: false, error: "Password must contain at least 2 alphabetic characters." };
   }
 
-  if (numbers.length < 2) {
-    return { valid: false, error: "Password must contain at least 2 numbers." };
+  if (numbers.length < 1) {
+    return { valid: false, error: "Password must contain at least 1 number." };
+  }
+
+  if (specialChars.length < 1) {
+    return { valid: false, error: "Password must contain at least 1 special character." };
   }
 
   // Check for control/non-printable characters (ASCII 0-31, 127)
