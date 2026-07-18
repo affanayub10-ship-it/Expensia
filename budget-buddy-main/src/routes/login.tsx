@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { validatePassword } from "@/lib/auth-hybrid";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -107,8 +108,9 @@ function LoginPage() {
         setIsLoading(false);
         return;
       }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters long.");
+      const pwdValidation = validatePassword(password);
+      if (!pwdValidation.valid) {
+        setError(pwdValidation.error || "Invalid password format.");
         setIsLoading(false);
         return;
       }

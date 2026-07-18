@@ -3,6 +3,7 @@ import { useState, useEffect, type FormEvent } from "react";
 import { Lock, Eye, EyeOff, CheckCircle2, Wallet, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { validatePassword } from "@/lib/auth-hybrid";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -38,8 +39,9 @@ function ResetPasswordPage() {
     setIsLoading(true);
 
     // Validation
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long");
+    const pwdValidation = validatePassword(newPassword);
+    if (!pwdValidation.valid) {
+      setError(pwdValidation.error || "Invalid password format.");
       setIsLoading(false);
       return;
     }

@@ -147,6 +147,37 @@ export async function loginWithStoredCredentials(email: string, password: string
 /**
  * Register new user (adds to both credentials table and Supabase Auth)
  */
+/**
+ * Validate password rules:
+ * - Length: 12-50 characters
+ * - Allow all printable characters
+ * - Must contain at least 2 alphabetic characters (a-z, A-Z) and 2 numbers (0-9)
+ */
+export function validatePassword(password: string): { valid: boolean; error?: string } {
+  if (password.length < 12 || password.length > 50) {
+    return { valid: false, error: "Password must be between 12 and 50 characters long." };
+  }
+
+  const alphabets = password.match(/[a-zA-Z]/g) || [];
+  const numbers = password.match(/[0-9]/g) || [];
+
+  if (alphabets.length < 2) {
+    return { valid: false, error: "Password must contain at least 2 alphabetic characters." };
+  }
+
+  if (numbers.length < 2) {
+    return { valid: false, error: "Password must contain at least 2 numbers." };
+  }
+
+  // Check for control/non-printable characters (ASCII 0-31, 127)
+  const hasControlChars = /[\x00-\x1F\x7F]/.test(password);
+  if (hasControlChars) {
+    return { valid: false, error: "Password contains invalid non-printable characters." };
+  }
+
+  return { valid: true };
+}
+
 export async function registerWithStoredCredentials(
   name: string,
   email: string,
@@ -157,6 +188,12 @@ export async function registerWithStoredCredentials(
   alreadyRegisteredUnverified?: boolean;
 }> {
   const normalizedEmail = email.toLowerCase().trim();
+
+  // Validate password middleware
+  const pwdValidation = validatePassword(password);
+  if (!pwdValidation.valid) {
+    return { success: false, error: pwdValidation.error };
+  }
 
   // Check if email already exists in profiles table (safer than signInWithPassword)
   const { data: existingProfile } = await supabase
