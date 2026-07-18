@@ -386,6 +386,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV.map((item) => {
+            // Hide items already present in the bottom navigation
+            if (["Dashboard", "Expenses", "Budgets", "Settings"].includes(item.label)) {
+              return null;
+            }
             const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
             const locked = isPremiumRoute && !isPremium;
             return (
