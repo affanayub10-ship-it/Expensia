@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -92,6 +93,7 @@ function LoginPage() {
     if (mode === "login") {
       const result = await login(email, password);
       if (result.success) {
+        toast.success("Successfully signed in to Expensia!", { duration: 3000 });
         // onboardingComplete will be set by loadUserProfile after login
         // AppLayout handles the redirect, but we do a best-effort navigation here
         await navigate({ to: onboardingComplete ? "/" : "/onboarding" });
@@ -118,7 +120,10 @@ function LoginPage() {
 
       const result = await signup(name, email, password);
       if (result.success) {
-        setIsSignupSuccess(true);
+        toast.success("Successfully signed up! Please check your email to verify your account.", { duration: 4000 });
+        setMode("login");
+        setPassword("");
+        setConfirmPassword("");
         setIsLoading(false);
       } else {
         setError(result.error ?? "Registration failed. Please try again.");
@@ -767,21 +772,6 @@ function LoginPage() {
                 <p className="login-success-desc">
                   We've sent a password recovery link to <strong>{email}</strong>.
                 </p>
-              </div>
-            ) : mode === "signup" && isSignupSuccess ? (
-              <div className="login-success-box text-center flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl shadow-soft">
-                <CheckCircle2 size={48} className="text-emerald-500 animate-bounce mb-3" />
-                <h3 className="login-success-title text-lg font-bold text-foreground mb-1">Verify your email</h3>
-                <p className="login-success-desc text-sm text-muted-foreground mb-4">
-                  We've sent a verification link to <strong>{email}</strong>. Please check your inbox and verify your email before logging in.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleModeChange("login")}
-                  className="login-btn flex items-center justify-center gap-2 mt-2 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 transition-colors"
-                >
-                  <ArrowLeft size={14} /> Back to Sign In
-                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate>
