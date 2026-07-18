@@ -124,6 +124,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const [isMobile, setIsMobile] = useState(false);
   const [shouldPulse, setShouldPulse] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Resize listener to track mobile breakpoint
   useEffect(() => {
@@ -142,6 +143,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
         setShouldPulse(false);
         localStorage.setItem("expensia-seen-menu-pulse", "true");
       }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // One-time educational menu tooltip logic
+  useEffect(() => {
+    const hasSeenTooltip = localStorage.getItem("expensia-seen-menu-tooltip");
+    if (!hasSeenTooltip) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -467,24 +479,52 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
             {/* Hamburger menu button (mobile only) */}
-            <Button
-              ref={toggleBtnRef}
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200",
-                shouldPulse && "animate-menu-pulse"
+            <div className="relative flex items-center">
+              <Button
+                ref={toggleBtnRef}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200",
+                  shouldPulse && "animate-menu-pulse"
+                )}
+                onClick={() => {
+                  handleMenuClick();
+                  setShowTooltip(false);
+                  localStorage.setItem("expensia-seen-menu-tooltip", "true");
+                }}
+                aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isDrawerOpen}
+              >
+                {isDrawerOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+
+              {/* Educational discoverability popover tooltip */}
+              {showTooltip && !isDrawerOpen && (
+                <div className="absolute right-0 top-12 z-50 w-56 rounded-xl bg-primary p-3.5 text-primary-foreground shadow-2xl animate-bounce lg:hidden text-left border border-primary-foreground/15">
+                  <div className="absolute -top-1.5 right-3.5 h-3 w-3 rotate-45 bg-primary" />
+                  <p className="text-xs font-semibold leading-relaxed">
+                    💡 Tap here to find Income, Savings, Reports, Predictions, and more!
+                  </p>
+                  <div className="mt-2.5 flex justify-end">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowTooltip(false);
+                        localStorage.setItem("expensia-seen-menu-tooltip", "true");
+                      }}
+                      className="rounded-lg bg-primary-foreground px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary-foreground/90 transition-colors"
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </div>
               )}
-              onClick={handleMenuClick}
-              aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
-              aria-expanded={isDrawerOpen}
-            >
-              {isDrawerOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
+            </div>
 
             <Button
               variant="ghost"
