@@ -924,7 +924,9 @@ function LoginPage() {
                 {error && (
                   <div className="login-error" role="alert">
                     <span>⚠</span>
-                    {error}
+                    {typeof error === "object"
+                      ? (error as any).message || JSON.stringify(error)
+                      : String(error)}
                   </div>
                 )}
 
