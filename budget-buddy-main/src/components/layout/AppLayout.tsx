@@ -58,6 +58,13 @@ const NAV: NavItem[] = [
   { label: "Settings", to: "/settings", icon: SettingsIcon },
 ];
 
+const BOTTOM_NAV: NavItem[] = [
+  { label: "Dashboard", to: "/", icon: LayoutDashboard },
+  { label: "Expenses", to: "/expenses", icon: ArrowDownCircle },
+  { label: "Budgets", to: "/budgets", icon: Wallet },
+  { label: "Settings", to: "/settings", icon: SettingsIcon },
+];
+
 function NotificationBell() {
   const { notifications, markNotificationsRead } = useApp();
   const unread = notifications.filter((n) => !n.read).length;
@@ -550,7 +557,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:pb-10">
+        <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:pb-10">
           {children}
         </main>
       </div>
@@ -591,7 +598,36 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
 
-
+      {/* Bottom nav (mobile only) */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/90 backdrop-blur-md lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1.5">
+          {BOTTOM_NAV.map((item) => {
+            const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
+            const locked = isPremiumRoute && !isPremium;
+            return (
+              <Link
+                key={item.to}
+                to={locked ? "#" : item.to}
+                onClick={(e) => {
+                  if (locked) {
+                    e.preventDefault();
+                    setUpgradeOpen(true);
+                  }
+                }}
+                className={cn(
+                  "relative flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium transition-colors",
+                  isActive(item.to) ? "text-primary" : "text-muted-foreground",
+                  locked && "opacity-60",
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+                {locked && <Lock className="absolute -right-2 -top-0.5 h-3 w-3 text-muted-foreground" />}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
