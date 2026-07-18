@@ -236,7 +236,7 @@ function VerifyEmailPage() {
 
         .verify-email-header {
           display: flex;
-          flex-col: column;
+          flex-direction: column;
           align-items: center;
           text-align: center;
           margin-bottom: 2rem;

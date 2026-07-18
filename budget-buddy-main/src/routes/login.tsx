@@ -123,7 +123,7 @@ function LoginPage() {
       const result = await signup(name, email, password);
       if (result.success) {
         toast.success("Successfully signed up! Please check your email to verify your account.", { duration: 4000 });
-        setMode("login");
+        setIsSignupSuccess(true);
         setPassword("");
         setConfirmPassword("");
         setIsLoading(false);
@@ -723,7 +723,7 @@ function LoginPage() {
             </div>
 
             {/* Back to Login action button for forgot/signup */}
-            {mode !== "login" && (
+            {mode !== "login" && !isSignupSuccess && (
               <button
                 type="button"
                 className="login-back-btn"
@@ -735,26 +735,30 @@ function LoginPage() {
             )}
 
             {/* Title / Subtitle based on Mode */}
-            {mode === "login" && (
+            {!isSignupSuccess && (
               <>
-                <h2 className="login-title">Welcome back</h2>
-                <p className="login-subtitle">Sign in to continue to your dashboard</p>
-              </>
-            )}
-            {mode === "signup" && (
-              <>
-                <h2 className="login-title">Create an account</h2>
-                <p className="login-subtitle">Start tracking your expenses and budgeting today</p>
-              </>
-            )}
-            {mode === "forgot" && (
-              <>
-                <h2 className="login-title">Forgot password?</h2>
-                <p className="login-subtitle">
-                  {!isResetSent
-                    ? "Enter your email address and we'll send you a link to reset your password"
-                    : "Instructions sent"}
-                </p>
+                {mode === "login" && (
+                  <>
+                    <h2 className="login-title">Welcome back</h2>
+                    <p className="login-subtitle">Sign in to continue to your dashboard</p>
+                  </>
+                )}
+                {mode === "signup" && (
+                  <>
+                    <h2 className="login-title">Create an account</h2>
+                    <p className="login-subtitle">Start tracking your expenses and budgeting today</p>
+                  </>
+                )}
+                {mode === "forgot" && (
+                  <>
+                    <h2 className="login-title">Forgot password?</h2>
+                    <p className="login-subtitle">
+                      {!isResetSent
+                        ? "Enter your email address and we'll send you a link to reset your password"
+                        : "Instructions sent"}
+                    </p>
+                  </>
+                )}
               </>
             )}
 
@@ -780,8 +784,31 @@ function LoginPage() {
               </div>
             )}
 
-            {/* Forgot password success state */}
-            {mode === "forgot" && isResetSent ? (
+            {/* Signup verification success card */}
+            {isSignupSuccess ? (
+              <div className="login-success-box text-center py-6 flex flex-col items-center gap-4">
+                <div className="verify-email-icon-box animated-pulse-circle bg-primary/10 border border-primary/25 rounded-2xl p-4 flex items-center justify-center text-primary shadow-xl">
+                  <Mail className="h-10 w-10 animate-bounce text-primary" />
+                </div>
+                <h3 className="login-success-title text-xl font-extrabold text-foreground mt-2">
+                  Verify your Email
+                </h3>
+                <p className="login-success-desc text-sm text-muted-foreground leading-relaxed max-w-sm">
+                  We sent a verification link to your email address. Please click the link to confirm your account.
+                </p>
+                <div className="my-2 bg-sidebar-accent/50 border border-sidebar-border px-4 py-2.5 rounded-xl font-mono text-xs text-foreground/90 flex items-center gap-2 select-all">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  {email}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("login")}
+                  className="mt-4 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/95 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  Return to Sign In
+                </button>
+              </div>
+            ) : mode === "forgot" && isResetSent ? (
               <div className="login-success-box">
                 <CheckCircle2 size={40} className="text-emerald-500" />
                 <h3 className="login-success-title">Check your inbox</h3>
