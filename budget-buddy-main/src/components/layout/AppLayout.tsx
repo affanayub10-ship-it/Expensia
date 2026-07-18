@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -18,6 +18,7 @@ import {
   Lock,
   Sparkles,
   Crown,
+  Menu,
   type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -106,6 +107,104 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
+
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Esc key & Focus Trap
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isDrawerOpen) {
+        setIsDrawerOpen(false);
+        toggleBtnRef.current?.focus();
+      }
+
+      if (e.key === "Tab" && isDrawerOpen && drawerRef.current) {
+        const focusableElements = drawerRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length > 0) {
+          const firstElement = focusableElements[0] as HTMLElement;
+          const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDrawerOpen]);
+
+  // Focus trap focus first element
+  useEffect(() => {
+    if (isDrawerOpen && drawerRef.current) {
+      const focusableElements = drawerRef.current.querySelectorAll('a[href], button');
+      if (focusableElements.length > 0) {
+        (focusableElements[0] as HTMLElement).focus();
+      }
+    }
+  }, [isDrawerOpen]);
+
+  // Prevent body scroll when open
+  useEffect(() => {
+    if (isDrawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isDrawerOpen]);
+
+  // Swipe Left gesture to close
+  useEffect(() => {
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: TouchEvent) => {
+      setTouchEnd(null);
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+      if (!touchStart || !touchEnd) return;
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > minSwipeDistance;
+      if (isLeftSwipe && isDrawerOpen) {
+        setIsDrawerOpen(false);
+      }
+    };
+
+    if (isDrawerOpen) {
+      window.addEventListener("touchstart", onTouchStart);
+      window.addEventListener("touchmove", onTouchMove);
+      window.addEventListener("touchend", onTouchEnd);
+    }
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isDrawerOpen, touchStart, touchEnd]);
 
   const isLoginPage = pathname === "/login";
   const isOnboardingPage = pathname === "/onboarding";
@@ -191,6 +290,64 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      {/* Backdrop (mobile only) */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
+          isDrawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsDrawerOpen(false)}
+      />
+
+      {/* Sidebar Drawer (mobile only) */}
+      <aside
+        ref={drawerRef}
+        aria-hidden={!isDrawerOpen}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[80vw] flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-in-out lg:hidden",
+          isDrawerOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-16 items-center gap-2 px-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Wallet className="h-5 w-5" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
+            Expensia
+          </span>
+        </div>
+        <nav className="flex-1 space-y-1 px-3 py-4">
+          {NAV.map((item) => {
+            const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
+            const locked = isPremiumRoute && !isPremium;
+            return (
+              <Link
+                key={item.to}
+                to={locked ? "#" : item.to}
+                onClick={(e) => {
+                  if (locked) {
+                    e.preventDefault();
+                    setUpgradeOpen(true);
+                  }
+                  setIsDrawerOpen(false);
+                }}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  locked && "opacity-60",
+                  isActive(item.to)
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="flex-1">{item.label}</span>
+                {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
       {/* Sidebar (desktop) */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <div className="flex h-16 items-center gap-2 px-6">
@@ -241,8 +398,35 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Main column */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
+          {/* Logo (mobile only) */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-foreground">
+              Expensia
+            </span>
+          </div>
+
           <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
+            {/* Hamburger menu button (mobile only) */}
+            <Button
+              ref={toggleBtnRef}
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsDrawerOpen((v) => !v)}
+              aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isDrawerOpen}
+            >
+              {isDrawerOpen ? (
+                <X className="h-5 w-5 transition-transform duration-200" />
+              ) : (
+                <Menu className="h-5 w-5 transition-transform duration-200" />
+              )}
+            </Button>
+
             <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="Help">
               <HelpCircle className="h-5 w-5" />
             </Button>
@@ -283,7 +467,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:pb-10">
+        <main className="mx-auto w-full max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:pb-10">
           {children}
         </main>
       </div>
@@ -324,36 +508,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
 
-      {/* Bottom nav (mobile) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/90 backdrop-blur-md lg:hidden">
-        <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1.5">
-          {NAV.map((item) => {
-            const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
-            const locked = isPremiumRoute && !isPremium;
-            return (
-              <Link
-                key={item.to}
-                to={locked ? "#" : item.to}
-                onClick={(e) => {
-                  if (locked) {
-                    e.preventDefault();
-                    setUpgradeOpen(true);
-                  }
-                }}
-                className={cn(
-                  "relative flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium transition-colors",
-                  isActive(item.to) ? "text-primary" : "text-muted-foreground",
-                  locked && "opacity-60",
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-                {locked && <Lock className="absolute -right-2 -top-0.5 h-3 w-3 text-muted-foreground" />}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+
 
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
