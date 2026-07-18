@@ -384,7 +384,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Expensia
           </span>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-3.5 px-4 py-6">
           {NAV.map((item) => {
             // Hide items already present in the bottom navigation
             if (["Dashboard", "Expenses", "Budgets", "Settings"].includes(item.label)) {
@@ -392,6 +392,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             }
             const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
             const locked = isPremiumRoute && !isPremium;
+            const isPremiumItem = item.label === "Premium";
+            
             return (
               <Link
                 key={item.to}
@@ -404,16 +406,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   setIsDrawerOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-4 rounded-2xl px-5 py-4 min-h-[58px] text-[17px] font-semibold transition-all select-none active:scale-[0.98] border",
                   locked && "opacity-60",
-                  isActive(item.to)
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                  isPremiumItem
+                    ? "bg-gradient-to-r from-amber-500/5 to-amber-500/10 border-amber-500/35 text-amber-500 hover:border-amber-500/60 active:bg-amber-500/20"
+                    : isActive(item.to)
+                    ? "bg-primary/10 text-primary border-primary/20 active:bg-primary/15"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground border-transparent active:bg-sidebar-accent/50"
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className={cn("h-6 w-6 shrink-0", isPremiumItem ? "text-amber-500" : "")} />
                 <span className="flex-1">{item.label}</span>
-                {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                {isPremiumItem && (
+                  <span className="ml-2 rounded-full bg-amber-500 text-slate-950 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                    PRO
+                  </span>
+                )}
+                {locked && <Lock className="h-4 w-4 text-muted-foreground animate-pulse" />}
               </Link>
             );
           })}
@@ -487,9 +496,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <Button
                 ref={toggleBtnRef}
                 variant="ghost"
-                size="icon"
                 className={cn(
-                  "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200",
+                  "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200 flex items-center gap-1.5 px-3 py-1.5 h-10 select-none",
                   shouldPulse && "animate-menu-pulse"
                 )}
                 onClick={() => {
@@ -501,10 +509,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 aria-expanded={isDrawerOpen}
               >
                 {isDrawerOpen ? (
-                  <X className="h-5 w-5" />
+                  <X className="h-4.5 w-4.5" />
                 ) : (
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-4.5 w-4.5" />
                 )}
+                <span className="text-xs font-semibold text-primary/95">More</span>
               </Button>
 
               {/* Educational discoverability popover tooltip */}
