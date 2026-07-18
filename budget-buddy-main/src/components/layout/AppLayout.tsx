@@ -115,6 +115,38 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [shouldPulse, setShouldPulse] = useState(false);
+
+  // Resize listener to track mobile breakpoint
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // One-time menu pulse cue logic
+  useEffect(() => {
+    const hasSeenPulse = localStorage.getItem("expensia-seen-menu-pulse");
+    if (!hasSeenPulse) {
+      setShouldPulse(true);
+      const timer = setTimeout(() => {
+        setShouldPulse(false);
+        localStorage.setItem("expensia-seen-menu-pulse", "true");
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleMenuClick = () => {
+    setIsDrawerOpen((v) => !v);
+    if (shouldPulse) {
+      setShouldPulse(false);
+      localStorage.setItem("expensia-seen-menu-pulse", "true");
+    }
+  };
+
   // Esc key & Focus Trap
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -290,6 +322,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      {/* Custom Styles for pulse animations */}
+      <style>{`
+        @keyframes menuPulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4);
+            transform: scale(1);
+          }
+          50% {
+            box-shadow: 0 0 12px 6px rgba(20, 184, 166, 0.7);
+            transform: scale(1.05);
+          }
+        }
+        .animate-menu-pulse {
+          animation: menuPulseGlow 1.6s infinite ease-in-out;
+        }
+      `}</style>
+
       {/* Backdrop (mobile only) */}
       <div
         className={cn(
@@ -415,22 +464,37 @@ export function AppLayout({ children }: { children: ReactNode }) {
               ref={toggleBtnRef}
               variant="ghost"
               size="icon"
-              className="lg:hidden"
-              onClick={() => setIsDrawerOpen((v) => !v)}
+              className={cn(
+                "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200",
+                shouldPulse && "animate-menu-pulse"
+              )}
+              onClick={handleMenuClick}
               aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
               aria-expanded={isDrawerOpen}
             >
               {isDrawerOpen ? (
-                <X className="h-5 w-5 transition-transform duration-200" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-5 w-5 transition-transform duration-200" />
+                <Menu className="h-5 w-5" />
               )}
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="Help">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setHelpOpen(true)}
+              aria-label="Help"
+              className="hidden lg:inline-flex"
+            >
               <HelpCircle className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="hidden lg:inline-flex"
+            >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <NotificationBell />
@@ -455,6 +519,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </DropdownMenuItem>
                   </>
                 )}
+                
+                {/* Mobile-only menu items */}
+                {isMobile && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={toggleTheme} className="flex items-center justify-between">
+                      <span>Theme Mode</span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        {theme === "dark" ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-blue-500" />}
+                        {theme === "dark" ? "Light" : "Dark"}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setHelpOpen(true)} className="flex items-center justify-between">
+                      <span>Help Center</span>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </DropdownMenuItem>
+                  </>
+                )}
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
