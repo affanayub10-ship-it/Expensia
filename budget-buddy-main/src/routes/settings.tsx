@@ -38,14 +38,7 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-const TIMEZONES = [
-  "America/Los_Angeles",
-  "America/New_York",
-  "Europe/London",
-  "Europe/Berlin",
-  "Asia/Kolkata",
-  "Asia/Tokyo",
-];
+
 const DATE_FORMATS = ["MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd"];
 const LANGUAGES = ["English", "Spanish", "French", "German", "Hindi"];
 
@@ -361,12 +354,7 @@ function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SettingSelect
-              label="Timezone"
-              value={settings.timezone}
-              options={TIMEZONES}
-              onChange={(v) => updateSettings({ timezone: v })}
-            />
+
             <SettingSelect
               label="Default expense category"
               value={settings.defaultCategory}
