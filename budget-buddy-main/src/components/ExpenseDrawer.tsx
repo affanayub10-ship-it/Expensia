@@ -13,7 +13,7 @@ import { UploadCloud, X, FileText, ChevronDown, Check, Loader2 } from "lucide-re
 import { useApp } from "@/context/AppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EXPENSE_CATEGORIES, type Expense, type Recurrence, type Status } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import { cn, compressImage } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 
 const RECURRENCES: Recurrence[] = ["None", "Daily", "Weekly", "Monthly", "Quarterly", "Yearly"];
@@ -54,18 +54,18 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
     }
   }, [open, editing, settings]);
 
-  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10 MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    try {
+      const dataUrl = await compressImage(file);
       set("receipt", dataUrl);
       setReceiptPreview({ name: file.name, url: dataUrl, type: file.type });
       toast.success(`Attached: ${file.name}`);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to process attachment");
+    }
   };
 
   const removeReceipt = () => {

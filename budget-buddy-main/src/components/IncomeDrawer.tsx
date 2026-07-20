@@ -14,7 +14,7 @@ import { useApp } from "@/context/AppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { INCOME_CATEGORIES, type Income, type IncomeRecurrence } from "@/lib/mock-data";
 import { getNextDate, recurrenceLabel } from "@/lib/income-recurrence";
-import { cn } from "@/lib/utils";
+import { cn, compressImage } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 
 const RECURRENCES: IncomeRecurrence[] = ["One-time", "Daily", "Weekly", "Monthly", "Yearly"];
@@ -51,18 +51,18 @@ export function IncomeDrawer({ open, onOpenChange, editing }: {
     }
   }, [open, editing]);
 
-  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10 MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    try {
+      const dataUrl = await compressImage(file);
       setAttachment({ name: file.name, url: dataUrl, type: file.type });
       setForm((f) => ({ ...f, attachmentUrl: dataUrl, attachmentName: file.name } as any));
       toast.success(`Attached: ${file.name}`);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to process attachment");
+    }
   };
 
   const removeAttachment = () => {

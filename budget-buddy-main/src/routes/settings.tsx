@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/shared";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/context/SubscriptionContext";
+import { compressImage } from "@/lib/utils";
 import { EXPENSE_CATEGORIES } from "@/lib/mock-data";
 import { toast } from "sonner";
 
@@ -68,20 +69,16 @@ function SettingsPage() {
     .slice(0, 2);
 
   // Convert selected image file to base64 for preview and storage
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2 MB");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    try {
+      const base64 = await compressImage(file);
       setAvatarPreview(base64);
       toast.success("Picture selected — click Save profile to apply");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to process image");
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -188,7 +185,7 @@ function SettingsPage() {
                     Remove
                   </button>
                 )}
-                <p className="text-[11px] text-muted-foreground">JPEG, PNG, WebP · max 2 MB</p>
+
               </div>
             </div>
             <div className="grid gap-1.5">
