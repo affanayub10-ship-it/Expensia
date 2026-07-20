@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { UploadCloud, X, FileText, ChevronDown, Check } from "lucide-react";
+import { UploadCloud, X, FileText, ChevronDown, Check, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EXPENSE_CATEGORIES, type Expense, type Recurrence, type Status } from "@/lib/mock-data";
@@ -38,7 +38,7 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [receiptPreview, setReceiptPreview] = useState<{ name: string; url: string; type: string } | null>(null);
   const [form, setForm] = useState<Expense>(emptyExpense(settings.defaultCategory));
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -78,6 +78,7 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
   const submit = async () => {
     if (!form.title.trim()) return toast.error("Title is required");
     if (!form.amount || form.amount <= 0) return toast.error("Enter a valid amount");
+    setIsSubmitting(true);
     try {
       if (editing) {
         await updateExpense(form);
@@ -89,6 +90,8 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
       onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save expense");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -275,8 +278,17 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
         </div>
 
         <SheetFooter className="mt-2">
-          <Button onClick={submit} disabled={editing ? !isDirty : false}>{editing ? "Save changes" : "Add expense"}</Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} disabled={isSubmitting || (editing ? !isDirty : false)}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {editing ? "Saving..." : "Adding..."}
+              </>
+            ) : (
+              editing ? "Save changes" : "Add expense"
+            )}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

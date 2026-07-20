@@ -25,7 +25,7 @@ const TIME_RANGES = [
 ];
 
 function Reports() {
-  const { income, budgets, settings } = useApp();
+  const { income, budgets, settings, savingsGoals } = useApp();
   const expenses = useActiveExpenses();
   const [range, setRange] = useState("monthly");
   const [analysisTab, setAnalysisTab] = useState("overview");
@@ -87,7 +87,7 @@ function Reports() {
   const totalExpenses = useMemo(() => filteredExpenses.reduce((s,e) => s + e.amount, 0), [filteredExpenses]);
   const totalIncome   = useMemo(() => filteredIncome.reduce((s,i) => s + i.amount, 0), [filteredIncome]);
   const totalBudget   = budgets.reduce((s,b) => s + b.limit, 0);
-  const savings       = totalIncome - totalExpenses;
+  const totalSavings  = useMemo(() => savingsGoals.reduce((s, g) => s + g.currentAmount, 0), [savingsGoals]);
 
   const monthlySeries = useMemo(() => chartBuckets.map(({label,start,end}) => ({
     month: label,
@@ -118,11 +118,11 @@ function Reports() {
     downloadFile(["Date,Title,Category,Amount,Status",...rows].join("\n"), `expenses-${rangeLabel.replace(/ /g,"-")}.csv`, "text/csv");
   }
   function exportJSON() {
-    downloadFile(JSON.stringify({range:rangeLabel,summary:{totalExpenses,totalIncome,savings},expenses:filteredExpenses,income:filteredIncome},null,2), `report-${rangeLabel.replace(/ /g,"-")}.json`, "application/json");
+    downloadFile(JSON.stringify({range:rangeLabel,summary:{totalExpenses,totalIncome,savings:totalSavings},expenses:filteredExpenses,income:filteredIncome},null,2), `report-${rangeLabel.replace(/ /g,"-")}.json`, "application/json");
   }
   function exportPDF() {
     const rows = filteredExpenses.map(e=>`<tr><td>${e.date}</td><td>${e.title}</td><td>${e.category}</td><td>$${e.amount.toFixed(2)}</td><td>${e.status}</td></tr>`).join("");
-    const html=`<html><head><title>Report</title><style>body{font-family:sans-serif;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#f3f4f6}</style></head><body><h2>Expense Report — ${rangeLabel}</h2><p>Expenses: ${formatMoney(totalExpenses)} | Income: ${formatMoney(totalIncome)} | Savings: ${formatMoney(savings)}</p><table><thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const html=`<html><head><title>Report</title><style>body{font-family:sans-serif;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#f3f4f6}</style></head><body><h2>Expense Report — ${rangeLabel}</h2><p>Expenses: ${formatMoney(totalExpenses)} | Income: ${formatMoney(totalIncome)} | Savings: ${formatMoney(totalSavings)}</p><table><thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
     const w=window.open("","_blank"); if(w){w.document.write(html);w.document.close();w.print();}
   }
   function downloadFile(content:string,filename:string,type:string){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);}
@@ -269,7 +269,7 @@ function Reports() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total Income"   value={formatMoney(totalIncome)}   icon={TrendingUp}  accent="income" />
         <StatCard label="Total Expense"  value={formatMoney(totalExpenses)} icon={TrendingDown} accent="expense" />
-        <StatCard label="Savings"        value={formatMoney(savings)}       icon={PiggyBank}   accent={savings>=0?"income":"expense"} />
+        <StatCard label="Savings"        value={formatMoney(totalSavings)}       icon={PiggyBank}   accent="income" />
         <StatCard label="Budget Used"    value={formatPercent(totalBudget?(totalExpenses/totalBudget)*100:0)} icon={Wallet} accent="warning" />
       </div>
 

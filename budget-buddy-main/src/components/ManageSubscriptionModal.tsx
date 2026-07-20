@@ -252,12 +252,8 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
                   <span className={cn("text-sm font-medium", statusInfo.color)}>{statusInfo.label}</span>
                 </div>
               </Row>
-              <Row label="Start Date">{formatDate(subscription.currentPeriodStart)}</Row>
               <Row label="Renewal Date">{formatDate(subscription.currentPeriodEnd)}</Row>
               <Row label="Amount Paid">{amount}</Row>
-              <Row label="Billing Cycle">
-                <span className="capitalize">{subscription.billingCycle}</span>
-              </Row>
               <Row label="Auto Renewal">
                 <div className="flex items-center gap-1.5">
                   <div className={cn("h-2 w-2 rounded-full", subscription.cancelAtPeriodEnd ? "bg-expense" : "bg-income")} />
@@ -316,7 +312,6 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Date</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Invoice</th>
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Amount</th>
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Status</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">Receipt</th>
@@ -331,9 +326,6 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
                           <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">
                             {formatDate(p.payment_date)}
                           </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground font-mono">
-                            {p.invoice_id ? p.invoice_id.slice(0, 14) + "..." : "—"}
-                          </td>
                           <td className="px-4 py-3 text-sm font-medium text-foreground">
                             {formatCurrency(p.amount, p.currency)}
                           </td>
@@ -346,12 +338,7 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
                           <td className="px-4 py-3 text-right">
                             {p.receipt_url && (
                               <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                                <Download className="h-3 w-3" /> Receipt
-                              </a>
-                            )}
-                            {p.invoice_url && (
-                              <a href={p.invoice_url} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                                Invoice <ExternalLink className="h-3 w-3" />
+                                <Download className="h-3 w-3" /> Download PDF
                               </a>
                             )}
                           </td>

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type SavingsGoal } from "@/lib/mock-data";
@@ -28,6 +28,7 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
   const [currentAmount, setCurrentAmount] = useState(0);
   const [note, setNote] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -49,7 +50,7 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (targetAmount <= 0) return toast.error("Target amount must be greater than zero");
-
+    setIsSubmitting(true);
     try {
       if (editing) {
         await updateSavingsGoal({ ...editing, title, targetAmount, currentAmount, note: note || undefined });
@@ -61,6 +62,8 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
       onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save savings goal");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -159,8 +162,17 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
         </div>
 
         <SheetFooter className="mt-2">
-          <Button onClick={submit}>{editing ? "Save changes" : "Create goal"}</Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {editing ? "Saving..." : "Creating..."}
+              </>
+            ) : (
+              editing ? "Save changes" : "Create goal"
+            )}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
