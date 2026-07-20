@@ -38,6 +38,7 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [receiptPreview, setReceiptPreview] = useState<{ name: string; url: string; type: string } | null>(null);
   const [form, setForm] = useState<Expense>(emptyExpense(settings.defaultCategory));
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
