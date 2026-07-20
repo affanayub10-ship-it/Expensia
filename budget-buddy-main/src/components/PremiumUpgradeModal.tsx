@@ -78,68 +78,70 @@ export function PremiumUpgradeModal({ open, onClose }: { open: boolean; onClose:
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-      <div
-        className="relative mx-4 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button onClick={onClose} className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-          <X className="h-4 w-4" />
-        </button>
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+      <div className="flex min-h-full items-center justify-center p-4" onClick={onClose}>
+        <div
+          className="relative w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button onClick={onClose} className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <X className="h-4 w-4" />
+          </button>
 
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 mb-4 ring-1 ring-primary/20">
-            <Crown className="h-7 w-7 text-primary" />
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 mb-3 ring-1 ring-primary/20">
+              <Crown className="h-6 w-6 text-primary" />
+            </div>
+
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-0.5 text-[11px] font-semibold text-primary">
+              <Sparkles className="h-3 w-3" /> PREMIUM
+            </span>
+
+            <h2 className="mt-2 text-xl font-bold text-foreground">Unlock Premium</h2>
+            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed max-w-sm">
+              Get full control of your finances with advanced tools, predictions, and insights.
+            </p>
           </div>
 
-          <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-0.5 text-[11px] font-semibold text-primary">
-            <Sparkles className="h-3 w-3" /> PREMIUM
-          </span>
+          <div className="mt-5 space-y-2.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">What you'll get:</p>
+            <div className="grid grid-cols-1 gap-2">
+              {PREMIUM_FEATURES.map((f) => (
+                <div key={f} className="flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <h2 className="mt-3 text-xl font-bold text-foreground">Unlock Premium</h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-sm">
-            Get full control of your finances with advanced tools, predictions, and insights.
+          <div className="mt-5 flex items-baseline justify-center gap-1">
+            <span className="text-3xl font-black text-foreground">$9</span>
+            <span className="text-sm text-muted-foreground">/month</span>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-2">
+            <Button className="w-full gap-2 rounded-xl h-11 text-base" onClick={handleUpgrade} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {loading ? "Processing..." : "Upgrade to Premium"}
+            </Button>
+            <Button variant="ghost" className="w-full rounded-xl text-muted-foreground" onClick={onClose}>
+              Maybe Later
+            </Button>
+            <button
+              onClick={() => { onClose(); navigate({ to: "/premium" }); }}
+              className="inline-flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Compare plans <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          <p className="mt-4 text-center text-[11px] text-muted-foreground">
+            Secure payments via Stripe · Cancel anytime
           </p>
         </div>
-
-        <div className="mt-6 space-y-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">What you'll get:</p>
-          <div className="grid grid-cols-1 gap-2">
-            {PREMIUM_FEATURES.map((f) => (
-              <div key={f} className="flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2.5">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Check className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{f}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 flex items-baseline justify-center gap-1">
-          <span className="text-3xl font-black text-foreground">$9</span>
-          <span className="text-sm text-muted-foreground">/month</span>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-2">
-          <Button className="w-full gap-2 rounded-xl h-11 text-base" onClick={handleUpgrade} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? "Processing..." : "Upgrade to Premium"}
-          </Button>
-          <Button variant="ghost" className="w-full rounded-xl text-muted-foreground" onClick={onClose}>
-            Maybe Later
-          </Button>
-          <button
-            onClick={() => { onClose(); navigate({ to: "/premium" }); }}
-            className="inline-flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Compare plans <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-
-        <p className="mt-4 text-center text-[11px] text-muted-foreground">
-          Secure payments via Stripe · Cancel anytime
-        </p>
       </div>
     </div>
   );

@@ -137,9 +137,17 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const isPremium = sub.status === "active" || sub.status === "trialing";
+        const interval = sub.items.data[0]?.price?.recurring?.interval;
+        const billingCycle = interval === "year" ? "yearly" : "monthly";
+
         await updateSubscription(sub.customer as string, {
           subscription_plan: isPremium ? "premium" : "free",
           subscription_status: sub.status,
+          cancel_at_period_end: sub.cancel_at_period_end,
+          current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          billing_cycle: billingCycle,
+          stripe_subscription_id: sub.id,
         });
         break;
       }

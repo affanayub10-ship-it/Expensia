@@ -163,7 +163,11 @@ function IncomePage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const cleanValue = e.target.value.replace(/[^a-zA-Z0-9\s.\-_@]/g, "");
+                setQuery(cleanValue);
+              }}
+              maxLength={35}
               placeholder="Search source, category..."
               className="pl-9"
             />

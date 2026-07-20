@@ -106,7 +106,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const isPremium =
     subscription.plan === "premium" &&
-    (subscription.status === "active" || subscription.status === "trialing");
+    (subscription.status === "active" || subscription.status === "trialing" || subscription.status === "cancelling");
 
   return (
     <SubscriptionContext.Provider

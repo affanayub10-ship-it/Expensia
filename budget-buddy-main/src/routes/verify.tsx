@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -94,7 +95,8 @@ function VerifyPage() {
         }
 
         if (active) {
-          setStatus("success");
+          toast.success("Email verified successfully! Welcome to your dashboard.");
+          navigate({ to: "/" });
         }
       } catch (err: any) {
         if (active) {

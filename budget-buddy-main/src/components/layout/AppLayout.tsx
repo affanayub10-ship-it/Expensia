@@ -271,25 +271,36 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const avatar = settings.avatar;
 
-  if (isLoading) return null;
+  const needsRedirect = !isLoading && (
+    (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) ||
+    (isAuthenticated && user && user.verified === false && !isVerifyEmailPage && !isVerifyPage) ||
+    (isAuthenticated && user?.verified !== false && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage)
+  );
 
-  // Unauthenticated user redirection
-  if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
-    setTimeout(() => navigate({ to: "/login" }), 0);
-    return null;
-  }
+  useEffect(() => {
+    if (isLoading) return;
 
-  // Authenticated but email unverified redirection
-  if (isAuthenticated && user && user.verified === false && !isVerifyEmailPage && !isVerifyPage) {
-    setTimeout(() => navigate({ to: "/verify-email" }), 0);
-    return null;
-  }
+    if (!isAuthenticated && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
+      navigate({ to: "/login" });
+    } else if (isAuthenticated && user && user.verified === false && !isVerifyEmailPage && !isVerifyPage) {
+      navigate({ to: "/verify-email" });
+    } else if (isAuthenticated && user?.verified !== false && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
+      navigate({ to: "/onboarding" });
+    }
+  }, [
+    isAuthenticated,
+    isLoading,
+    user,
+    onboardingComplete,
+    isLoginPage,
+    isOnboardingPage,
+    isResetPasswordPage,
+    isVerifyPage,
+    isVerifyEmailPage,
+    navigate,
+  ]);
 
-  // Authenticated but onboarding not done redirection
-  if (isAuthenticated && user?.verified !== false && !onboardingComplete && !isLoginPage && !isOnboardingPage && !isResetPasswordPage && !isVerifyPage && !isVerifyEmailPage) {
-    setTimeout(() => navigate({ to: "/onboarding" }), 0);
-    return null;
-  }
+  if (isLoading || needsRedirect) return null;
 
   if (isLoginPage || isOnboardingPage || isResetPasswordPage || isVerifyPage || isVerifyEmailPage) return <>{children}</>;
 

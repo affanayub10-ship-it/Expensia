@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader, StatCard, CategoryPill, StatusBadge, CategoryIcon } from "@/components/shared";
 import { useApp, useActiveExpenses } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatDate, formatMoney } from "@/lib/format";
 import { EXPENSE_CATEGORIES } from "@/lib/mock-data";
 
@@ -20,10 +21,13 @@ const EXPENSE_COLOR = "#e05c3a";
 const tooltipStyle = { backgroundColor: "#1e293b", border: "none", borderRadius: "0.75rem", color: "#f1f5f9", fontSize: "12px" };
 
 function Dashboard() {
+  const { isAuthenticated, isLoading } = useAuth();
   const { income, budgets, settings } = useApp();
   const expenses = useActiveExpenses();
   const dateFmt = settings.dateFormat;
   const [chartType, setChartType] = useState<"line" | "bar">("bar");
+
+  if (isLoading || !isAuthenticated) return null;
 
   const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
   const totalIncome   = useMemo(() => income.reduce((s, i) => s + i.amount, 0), [income]);

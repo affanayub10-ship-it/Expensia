@@ -196,7 +196,11 @@ function AdminSubscriptionsPage() {
                 <Input
                   placeholder="Search by name or email..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    const cleanValue = e.target.value.replace(/[^a-zA-Z0-9\s.\-_@]/g, "");
+                    setSearchTerm(cleanValue);
+                  }}
+                  maxLength={50}
                   className="pl-9"
                 />
               </div>

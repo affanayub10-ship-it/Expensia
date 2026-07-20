@@ -5,6 +5,19 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { validatePassword } from "@/lib/auth-hybrid";
 
+const getPasswordRequirements = (password: string) => {
+  const alphabets = password.match(/[a-zA-Z]/g) || [];
+  const numbers = password.match(/[0-9]/g) || [];
+  const specialChars = password.match(/[^a-zA-Z0-9]/g) || [];
+  
+  return {
+    length: password.length >= 9 && password.length <= 25,
+    letters: alphabets.length >= 2,
+    number: numbers.length >= 1,
+    symbol: specialChars.length >= 1,
+  };
+};
+
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
 });
@@ -413,7 +426,37 @@ function ResetPasswordPage() {
                       {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  <p className="reset-hint">Must be at least 6 characters long</p>
+                  {newPassword && (
+                    <div className="mt-2 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] space-y-1.5 animate-in fade-in duration-200">
+                      <p className="font-semibold text-zinc-400 mb-1 text-left">Password Requirements:</p>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        <div className="flex items-center gap-1.5 text-left">
+                          <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getPasswordRequirements(newPassword).length ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-zinc-800 text-zinc-500 border border-zinc-700"}`}>
+                            {getPasswordRequirements(newPassword).length ? "✓" : "○"}
+                          </span>
+                          <span className={getPasswordRequirements(newPassword).length ? "text-emerald-400 font-medium" : "text-zinc-500"}>9-25 characters</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-left">
+                          <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getPasswordRequirements(newPassword).letters ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-zinc-800 text-zinc-500 border border-zinc-700"}`}>
+                            {getPasswordRequirements(newPassword).letters ? "✓" : "○"}
+                          </span>
+                          <span className={getPasswordRequirements(newPassword).letters ? "text-emerald-400 font-medium" : "text-zinc-500"}>At least 2 letters</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-left">
+                          <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getPasswordRequirements(newPassword).number ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-zinc-800 text-zinc-500 border border-zinc-700"}`}>
+                            {getPasswordRequirements(newPassword).number ? "✓" : "○"}
+                          </span>
+                          <span className={getPasswordRequirements(newPassword).number ? "text-emerald-400 font-medium" : "text-zinc-500"}>At least 1 number</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-left">
+                          <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getPasswordRequirements(newPassword).symbol ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-zinc-800 text-zinc-500 border border-zinc-700"}`}>
+                            {getPasswordRequirements(newPassword).symbol ? "✓" : "○"}
+                          </span>
+                          <span className={getPasswordRequirements(newPassword).symbol ? "text-emerald-400 font-medium" : "text-zinc-500"}>At least 1 symbol</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirm Password */}

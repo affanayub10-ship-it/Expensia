@@ -126,7 +126,31 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
               <Label className="text-xs font-medium text-muted-foreground">Note (Optional)</Label>
               <Textarea
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const words = val.trim().split(/\s+/).filter(Boolean);
+                  if (words.length <= 100) {
+                    setNote(val);
+                  } else {
+                    let count = 0;
+                    let charIndex = 0;
+                    let inWord = false;
+                    for (let i = 0; i < val.length; i++) {
+                      if (!/\s/.test(val[i])) {
+                        if (!inWord) {
+                          inWord = true;
+                          count++;
+                          if (count > 100) break;
+                        }
+                      } else {
+                        inWord = false;
+                      }
+                      charIndex = i + 1;
+                    }
+                    setNote(val.slice(0, charIndex));
+                    toast.warning("Notes cannot exceed 100 words");
+                  }
+                }}
                 placeholder="Optional notes..."
                 rows={2}
               />

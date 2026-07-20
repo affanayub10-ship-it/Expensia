@@ -215,7 +215,36 @@ export function IncomeDrawer({ open, onOpenChange, editing }: {
             )}
 
             <Field label="Notes">
-              <Textarea value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} placeholder="Optional notes (employer, project name, etc.)" rows={2} />
+              <Textarea
+                value={form.notes ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const words = val.trim().split(/\s+/).filter(Boolean);
+                  if (words.length <= 100) {
+                    set("notes", val);
+                  } else {
+                    let count = 0;
+                    let charIndex = 0;
+                    let inWord = false;
+                    for (let i = 0; i < val.length; i++) {
+                      if (!/\s/.test(val[i])) {
+                        if (!inWord) {
+                          inWord = true;
+                          count++;
+                          if (count > 100) break;
+                        }
+                      } else {
+                        inWord = false;
+                      }
+                      charIndex = i + 1;
+                    }
+                    set("notes", val.slice(0, charIndex));
+                    toast.warning("Notes cannot exceed 100 words");
+                  }
+                }}
+                placeholder="Optional notes (employer, project name, etc.)"
+                rows={2}
+              />
             </Field>
 
             <Field label="Attachment">

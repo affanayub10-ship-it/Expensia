@@ -63,16 +63,18 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       if (!user) return;
 
       if (subscription.stripeSubscriptionId) {
-        await supabase.functions.invoke("cancel-subscription", {
+        const { data, error: invokeError } = await supabase.functions.invoke("cancel-subscription", {
           body: { subscriptionId: subscription.stripeSubscriptionId },
         });
+        if (invokeError) throw invokeError;
+        if (data?.error) throw new Error(data.error);
       }
 
       const { error } = await supabase.from("subscriptions").upsert(
         {
           user_id: user.id,
           subscription_plan: "premium",
-          subscription_status: "cancelling",
+          subscription_status: "active",
           cancel_at_period_end: true,
         },
         { onConflict: "user_id" }
@@ -84,7 +86,7 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       setConfirmCancel(false);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to cancel subscription.");
+      toast.error(err instanceof Error ? err.message : "Failed to cancel subscription.");
     } finally {
       setActionLoading(null);
     }
@@ -97,9 +99,11 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       if (!user) return;
 
       if (subscription.stripeSubscriptionId) {
-        await supabase.functions.invoke("cancel-subscription", {
+        const { data, error: invokeError } = await supabase.functions.invoke("cancel-subscription", {
           body: { subscriptionId: subscription.stripeSubscriptionId, cancel: false },
         });
+        if (invokeError) throw invokeError;
+        if (data?.error) throw new Error(data.error);
       }
 
       const { error } = await supabase.from("subscriptions").upsert(
@@ -117,7 +121,7 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       toast.success("Subscription resumed successfully.");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to resume subscription.");
+      toast.error(err instanceof Error ? err.message : "Failed to resume subscription.");
     } finally {
       setActionLoading(null);
     }
@@ -197,10 +201,14 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  const statusInfo = STATUS_CONFIG[subscription.status] ?? STATUS_CONFIG.active;
+  const displayStatus = 
+    subscription.status === "cancelling" || (subscription.status === "active" && subscription.cancelAtPeriodEnd)
+      ? "cancelling"
+      : subscription.status;
+  const statusInfo = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.active;
   const StatusIcon = statusInfo.icon;
   const amount = subscription.plan === "premium" ? (subscription.billingCycle === "yearly" ? "$90" : "$9") : "$0";
-  const isActive = subscription.status === "active" || subscription.status === "trialing";
+  const isActive = subscription.status === "active" || subscription.status === "trialing" || subscription.status === "cancelling";
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
