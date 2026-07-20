@@ -24,6 +24,7 @@ if (!SUPABASE_ANON_KEY) {
 
 const stripe = new Stripe(SECRET_KEY, {
   apiVersion: "2024-06-20",
+  httpClient: Stripe.createFetchHttpClient(),
 });
 
 const corsHeaders = {
