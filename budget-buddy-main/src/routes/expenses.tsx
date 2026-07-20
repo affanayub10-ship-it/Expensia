@@ -366,7 +366,7 @@ function Expenses() {
                 setQuery(cleanValue);
               }}
               maxLength={35}
-              placeholder="Search by title..."
+              placeholder="Search by title... (max 35 chars)"
               className="pl-9"
             />
           </div>

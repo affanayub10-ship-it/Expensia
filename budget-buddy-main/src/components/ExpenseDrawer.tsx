@@ -209,7 +209,7 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
               </Field>
             </div>
 
-            <Field label="Notes">
+            <Field label="Notes (max 100 words)">
               <Textarea
                 value={form.notes ?? ""}
                 onChange={(e) => {

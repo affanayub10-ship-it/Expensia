@@ -168,7 +168,7 @@ function IncomePage() {
                 setQuery(cleanValue);
               }}
               maxLength={35}
-              placeholder="Search source, category..."
+              placeholder="Search source, category... (max 35 chars)"
               className="pl-9"
             />
           </div>

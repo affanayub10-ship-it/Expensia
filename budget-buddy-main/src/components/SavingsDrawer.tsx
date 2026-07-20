@@ -123,7 +123,7 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
             </div>
 
             <div className="grid gap-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Note (Optional)</Label>
+              <Label className="text-xs font-medium text-muted-foreground">Note (Optional - max 100 words)</Label>
               <Textarea
                 value={note}
                 onChange={(e) => {

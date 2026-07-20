@@ -214,7 +214,7 @@ export function IncomeDrawer({ open, onOpenChange, editing }: {
               </div>
             )}
 
-            <Field label="Notes">
+            <Field label="Notes (max 100 words)">
               <Textarea
                 value={form.notes ?? ""}
                 onChange={(e) => {
