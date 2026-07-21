@@ -24,9 +24,7 @@ serve(async (req) => {
     }
 
     if (cancel) {
-      await stripe.subscriptions.update(subscriptionId, {
-        cancel_at_period_end: true,
-      });
+      await stripe.subscriptions.cancel(subscriptionId);
     } else {
       await stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: false,

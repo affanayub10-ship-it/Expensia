@@ -73,16 +73,16 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
       const { error } = await supabase.from("subscriptions").upsert(
         {
           user_id: user.id,
-          subscription_plan: "premium",
-          subscription_status: "active",
-          cancel_at_period_end: true,
+          subscription_plan: "free",
+          subscription_status: "canceled",
+          cancel_at_period_end: false,
         },
         { onConflict: "user_id" }
       );
       if (error) throw error;
       await refreshSubscription();
-      addNotification("Subscription Cancelling", "Your Premium will remain active until the end of the billing period, then cancel automatically.");
-      toast.success("Cancellation scheduled. Premium active until period end.");
+      addNotification("Subscription Canceled", "Your Premium subscription has been canceled successfully.");
+      toast.success("Subscription canceled successfully.");
       setConfirmCancel(false);
     } catch (err) {
       console.error(err);
@@ -387,7 +387,7 @@ export function ManageSubscriptionModal({ open, onClose }: Props) {
                 <div className="mt-4 rounded-xl border border-expense/30 bg-expense/5 p-4">
                   <p className="text-sm text-foreground font-medium mb-2">Cancel subscription?</p>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Your Premium features will remain active until <strong>{formatDate(subscription.currentPeriodEnd)}</strong>, then your subscription will end. You won't be charged again.
+                    Your Premium features will end immediately. You won't be charged again.
                   </p>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setConfirmCancel(false)}>Keep Premium</Button>
