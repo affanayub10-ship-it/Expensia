@@ -194,7 +194,7 @@ function SettingsPage() {
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input type="email" value={email} disabled readOnly className="bg-muted cursor-not-allowed select-none opacity-85" />
             </div>
             <Button
               onClick={() => {
