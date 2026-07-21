@@ -39,7 +39,7 @@ serve(async (req) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: sub.stripe_customer_id,
-      return_url: `${req.headers.get("origin") ?? "http://localhost:3000"}/premium`,
+      return_url: `${req.headers.get("origin") ?? "http://localhost:3000"}/`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
