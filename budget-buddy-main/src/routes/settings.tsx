@@ -190,7 +190,7 @@ function SettingsPage() {
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Full name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={25} placeholder="Full name (max 25 chars)" />
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-muted-foreground">Email</Label>

@@ -68,6 +68,12 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -90,6 +96,7 @@ function LoginPage() {
   const handleModeChange = (newMode: "login" | "signup" | "forgot") => {
     setMode(newMode);
     setError("");
+    setFieldErrors({});
     setIsLoading(false);
     setIsResetSent(false);
     setIsSignupSuccess(false);
@@ -103,38 +110,51 @@ function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
+    setFieldErrors({});
 
-    if (mode === "login") {
-      const result = await login(email, password);
-      if (result.success) {
-        toast.success("Successfully signed in to Expensia!", { duration: 3000 });
-        // onboardingComplete will be set by loadUserProfile after login
-        // AppLayout handles the redirect, but we do a best-effort navigation here
-        await navigate({ to: onboardingComplete ? "/" : "/onboarding" });
+    const newErrors: { name?: string; email?: string; password?: string; confirmPassword?: string } = {};
+
+    if (mode === "signup") {
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim();
+
+      if (!trimmedName) {
+        newErrors.name = "Kindly fill your full name";
+      } else if (trimmedName.length > 25) {
+        newErrors.name = "Full name must be 25 characters or less";
+      }
+
+      if (!trimmedEmail) {
+        newErrors.email = "Kindly fill your email address";
+      } else if (trimmedEmail.length > 35) {
+        newErrors.email = "Email address must be 35 characters or less";
+      } else if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
+        newErrors.email = "Kindly enter a valid email address";
+      }
+
+      if (!password) {
+        newErrors.password = "Kindly fill your password";
       } else {
-        setError(result.error ?? "Login failed. Please try again.");
-        setIsLoading(false);
+        const pwdValidation = validatePassword(password);
+        if (!pwdValidation.valid) {
+          newErrors.password = pwdValidation.error || "Password does not meet requirements";
+        }
       }
-    } else if (mode === "signup") {
-      if (!name.trim()) {
-        setError("Please enter your full name.");
-        setIsLoading(false);
-        return;
+
+      if (!confirmPassword) {
+        newErrors.confirmPassword = "Kindly confirm your password";
+      } else if (password !== confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match. Please correct it";
       }
-      const pwdValidation = validatePassword(password);
-      if (!pwdValidation.valid) {
-        setError(pwdValidation.error || "Invalid password format.");
-        setIsLoading(false);
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        setIsLoading(false);
+
+      if (Object.keys(newErrors).length > 0) {
+        setFieldErrors(newErrors);
+        setError("Kindly fill in all required info or correct invalid details.");
         return;
       }
 
-      const result = await signup(name, email, password);
+      setIsLoading(true);
+      const result = await signup(trimmedName, trimmedEmail, password);
       if (result.success) {
         toast.success("Successfully signed up! Please check your email to verify your account.", { duration: 4000 });
         setIsSignupSuccess(true);
@@ -145,8 +165,48 @@ function LoginPage() {
         setError(result.error ?? "Registration failed. Please try again.");
         setIsLoading(false);
       }
+    } else if (mode === "login") {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail) {
+        newErrors.email = "Kindly fill your email address";
+      } else if (trimmedEmail.length > 35) {
+        newErrors.email = "Email address must be 35 characters or less";
+      }
+      if (!password) {
+        newErrors.password = "Kindly fill your password";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setFieldErrors(newErrors);
+        setError("Kindly fill in all required info.");
+        return;
+      }
+
+      setIsLoading(true);
+      const result = await login(trimmedEmail, password);
+      if (result.success) {
+        toast.success("Successfully signed in to Expensia!", { duration: 3000 });
+        await navigate({ to: onboardingComplete ? "/" : "/onboarding" });
+      } else {
+        setError(result.error ?? "Login failed. Please try again.");
+        setIsLoading(false);
+      }
     } else if (mode === "forgot") {
-      const result = await resetPassword(email);
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail) {
+        newErrors.email = "Kindly fill your email address";
+      } else if (trimmedEmail.length > 35) {
+        newErrors.email = "Email address must be 35 characters or less";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setFieldErrors(newErrors);
+        setError("Kindly fill your email address.");
+        return;
+      }
+
+      setIsLoading(true);
+      const result = await resetPassword(trimmedEmail);
       if (result.success) {
         setIsResetSent(true);
       } else {
@@ -458,6 +518,19 @@ function LoginPage() {
           box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
         }
         .login-input.has-right { padding-right: 3rem; }
+        .login-input.has-error {
+          border-color: rgba(244, 63, 94, 0.8) !important;
+          background: rgba(244, 63, 94, 0.05) !important;
+        }
+        .login-field-error {
+          font-size: 0.75rem;
+          color: #fb7185;
+          margin-top: 0.375rem;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-weight: 500;
+        }
         .login-eye-btn {
           position: absolute;
           right: 0.5rem;
@@ -854,16 +927,23 @@ function LoginPage() {
                       <input
                         id="login-name"
                         type="text"
+                        maxLength={25}
                         required
-                        placeholder="John Doe"
+                        placeholder="John Doe (max 25 chars)"
                         value={name}
                         onChange={(e) => {
                           setName(e.target.value);
                           setError("");
+                          setFieldErrors((prev) => ({ ...prev, name: undefined }));
                         }}
-                        className="login-input"
+                        className={`login-input ${fieldErrors.name ? "has-error" : ""}`}
                       />
                     </div>
+                    {fieldErrors.name && (
+                      <p className="login-field-error">
+                        <span>⚠️</span> {fieldErrors.name}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -878,17 +958,24 @@ function LoginPage() {
                       id="login-email"
                       type="email"
                       autoComplete="email"
+                      maxLength={35}
                       required
-                      placeholder="you@example.com"
+                      placeholder="you@example.com (max 35 chars)"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
                         setError("");
+                        setFieldErrors((prev) => ({ ...prev, email: undefined }));
                       }}
-                      className="login-input"
+                      className={`login-input ${fieldErrors.email ? "has-error" : ""}`}
                       inputMode="email"
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="login-field-error">
+                      <span>⚠️</span> {fieldErrors.email}
+                    </p>
+                  )}
                 </div>
 
                 {/* Password field (login and signup mode) */}
@@ -909,8 +996,9 @@ function LoginPage() {
                         onChange={(e) => {
                           setPassword(e.target.value);
                           setError("");
+                          setFieldErrors((prev) => ({ ...prev, password: undefined }));
                         }}
-                        className="login-input has-right"
+                        className={`login-input has-right ${fieldErrors.password ? "has-error" : ""}`}
                       />
                       <button
                         type="button"
@@ -921,6 +1009,11 @@ function LoginPage() {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+                    {fieldErrors.password && (
+                      <p className="login-field-error">
+                        <span>⚠️</span> {fieldErrors.password}
+                      </p>
+                    )}
                     {mode === "signup" && password && (
                       <div className="mt-2 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] space-y-1.5 animate-in fade-in duration-200">
                         <p className="font-semibold text-zinc-400 mb-1">Password Requirements:</p>
@@ -973,8 +1066,9 @@ function LoginPage() {
                         onChange={(e) => {
                           setConfirmPassword(e.target.value);
                           setError("");
+                          setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                         }}
-                        className="login-input has-right"
+                        className={`login-input has-right ${fieldErrors.confirmPassword ? "has-error" : ""}`}
                       />
                       <button
                         type="button"
@@ -985,6 +1079,11 @@ function LoginPage() {
                         {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+                    {fieldErrors.confirmPassword && (
+                      <p className="login-field-error">
+                        <span>⚠️</span> {fieldErrors.confirmPassword}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1024,12 +1123,7 @@ function LoginPage() {
                   id="login-submit-btn"
                   type="submit"
                   className="login-btn"
-                  disabled={
-                    isLoading ||
-                    !email ||
-                    (mode !== "forgot" && !password) ||
-                    (mode === "signup" && (!name || !confirmPassword))
-                  }
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
