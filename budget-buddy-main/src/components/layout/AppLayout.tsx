@@ -328,7 +328,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div className="relative min-h-screen w-full max-w-full overflow-x-hidden bg-background font-sans antialiased">
       {/* ── Lightbox ── */}
       {lightboxOpen && avatar && (
         <div
@@ -516,8 +516,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main column */}
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
+      <div className="w-full max-w-full overflow-x-hidden lg:pl-64">
+        <header className="sticky top-0 z-20 flex h-16 w-full max-w-full items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
           {/* Mobile Left: Logo */}
           <div className="flex items-center gap-2 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
