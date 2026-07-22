@@ -388,7 +388,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           isDrawerOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center gap-2 px-6">
+        <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Wallet className="h-5 w-5" />
           </div>
@@ -396,12 +396,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Expensia
           </span>
         </div>
-        <nav className="flex-1 space-y-3.5 px-4 py-6">
+
+        <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
           {NAV.map((item) => {
-            // Hide items already present in the bottom navigation
-            if (["Dashboard", "Expenses", "Budgets", "Settings"].includes(item.label)) {
-              return null;
-            }
             const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
             const locked = isPremiumRoute && !isPremium;
             const isPremiumItem = item.label === "Premium";
@@ -418,7 +415,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   setIsDrawerOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-4 rounded-2xl px-5 py-4 min-h-[58px] text-[17px] font-semibold transition-all select-none active:scale-[0.98] border",
+                  "flex items-center gap-3.5 rounded-xl px-4 py-3 text-base font-semibold transition-all select-none active:scale-[0.98] border",
                   locked && "opacity-60",
                   isPremiumItem
                     ? "bg-gradient-to-r from-amber-500/5 to-amber-500/10 border-amber-500/35 text-amber-500 hover:border-amber-500/60 active:bg-amber-500/20"
@@ -427,10 +424,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground border-transparent active:bg-sidebar-accent/50"
                 )}
               >
-                <item.icon className={cn("h-6 w-6 shrink-0", isPremiumItem ? "text-amber-500" : "")} />
+                <item.icon className={cn("h-5 w-5 shrink-0", isPremiumItem ? "text-amber-500" : "")} />
                 <span className="flex-1">{item.label}</span>
                 {isPremiumItem && (
-                  <span className="ml-2 rounded-full bg-amber-500 text-slate-950 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                  <span className="ml-2 rounded-full bg-amber-500 text-slate-950 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-sm">
                     PRO
                   </span>
                 )}
@@ -439,6 +436,35 @@ export function AppLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* Drawer Bottom: User Profile & Actions */}
+        <div className="border-t border-sidebar-border p-4 space-y-3 bg-sidebar/50">
+          <div className="flex items-center gap-3 rounded-xl p-1">
+            <UserAvatar size="md" />
+            <Link to="/settings" onClick={() => setIsDrawerOpen(false)} className="min-w-0 flex-1 hover:opacity-80">
+              <p className="truncate text-sm font-semibold text-sidebar-foreground">{settings.name}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{settings.email}</p>
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold h-9"
+              onClick={() => { setIsDrawerOpen(false); setHelpOpen(true); }}
+            >
+              <HelpCircle className="h-4 w-4" /> Help
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold h-9"
+              onClick={() => { setIsDrawerOpen(false); handleSignOut(); }}
+            >
+              Sign out
+            </Button>
+          </div>
+        </div>
       </aside>
 
       {/* Sidebar (desktop) */}
@@ -492,72 +518,42 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Main column */}
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
-          {/* Logo, Three-dots More Menu, and Notification Bell (mobile view) */}
+          {/* Mobile Left: Logo */}
           <div className="flex items-center gap-2 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Wallet className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground mr-1">
+            <span className="text-lg font-semibold tracking-tight text-foreground">
               Expensia
             </span>
+          </div>
 
-            {/* Three dots More dropdown button */}
+          {/* Mobile Right: Notification Bell + Three Dots (Blue Highlighted Button) */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <NotificationBell />
             <div className="relative flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    ref={toggleBtnRef}
-                    variant="ghost"
-                    className={cn(
-                      "rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200 flex items-center gap-1 px-2.5 py-1 h-9 select-none",
-                      shouldPulse && "animate-menu-pulse"
-                    )}
-                    aria-label="More options"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="text-xs font-semibold text-primary/95">More</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>{settings.name}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings">Profile & Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleMenuClick();
-                      setShowTooltip(false);
-                      localStorage.setItem("expensia-seen-menu-tooltip", "true");
-                    }}
-                    className="flex items-center justify-between"
-                  >
-                    <span>Navigation Menu</span>
-                    <Menu className="h-4 w-4 text-primary" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setHelpOpen(true)} className="flex items-center justify-between">
-                    <span>Help Center</span>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </DropdownMenuItem>
-                  {avatar && (
-                    <DropdownMenuItem onClick={() => setLightboxOpen(true)}>
-                      View Picture
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={handleSignOut}
-                  >
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                ref={toggleBtnRef}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-10 w-10 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 flex items-center justify-center select-none",
+                  shouldPulse && "animate-menu-pulse"
+                )}
+                onClick={() => {
+                  handleMenuClick();
+                  setShowTooltip(false);
+                  localStorage.setItem("expensia-seen-menu-tooltip", "true");
+                }}
+                aria-label="Open navigation menu"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
 
               {/* Educational discoverability popover tooltip */}
               {showTooltip && !isDrawerOpen && (
-                <div className="absolute left-0 top-11 z-50 w-56 rounded-xl bg-primary p-3.5 text-primary-foreground shadow-2xl animate-bounce lg:hidden text-left border border-primary-foreground/15">
-                  <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 bg-primary" />
+                <div className="absolute right-0 top-12 z-50 w-56 rounded-xl bg-primary p-3.5 text-primary-foreground shadow-2xl animate-bounce lg:hidden text-left border border-primary-foreground/15">
+                  <div className="absolute -top-1.5 right-3.5 h-3 w-3 rotate-45 bg-primary" />
                   <p className="text-xs font-semibold leading-relaxed">
                     💡 Tap here to find Income, Savings, Reports, Predictions, and more!
                   </p>
@@ -576,9 +572,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </div>
               )}
             </div>
-
-            {/* Notification Bell on left side for mobile */}
-            <NotificationBell />
           </div>
 
           {/* Desktop Right Header Actions */}
@@ -629,7 +622,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:pb-10">
+        <main className="mx-auto w-full max-w-7xl px-4 pb-20 pt-4 sm:px-6 lg:pb-10 overflow-x-hidden">
           {children}
         </main>
       </div>

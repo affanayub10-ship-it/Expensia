@@ -212,3 +212,12 @@
   color: #f8fafc !important;
   font-weight: 600 !important;
 }
+
+/* -------------------------------------------------------
+ * Mobile view stability & horizontal overflow lock
+ * ------------------------------------------------------- */
+html, body, #root {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none;
+}
