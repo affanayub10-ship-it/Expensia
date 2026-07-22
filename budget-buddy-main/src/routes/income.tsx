@@ -398,7 +398,17 @@ function IncomePage() {
         </Card>
       )}
 
-      <IncomeDrawer open={drawer} onOpenChange={setDrawer} editing={editing} />
+      <IncomeDrawer
+        open={drawer}
+        onOpenChange={(o) => {
+          setDrawer(o);
+          if (!o) {
+            setEditing(null);
+            fetchFirstPage();
+          }
+        }}
+        editing={editing}
+      />
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>

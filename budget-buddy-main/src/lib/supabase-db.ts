@@ -344,7 +344,7 @@ export async function updateIncome(income: Income): Promise<Income> {
         })
         .eq("id", income.id)
         .eq("user_id", userId)
-        .select("id, source, amount, date, category, notes, recurrence, next_date")
+        .select("id, source, amount, date, category, notes")
         .single();
       if (e2) throw e2;
       return {
