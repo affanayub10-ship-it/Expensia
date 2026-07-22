@@ -24,6 +24,24 @@ const TIME_RANGES = [
   { value: "custom", label: "Custom Range" },
 ];
 
+function CustomChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-2xl backdrop-blur-md">
+      {label && <p className="mb-1.5 text-[11px] font-bold text-slate-300">{label}</p>}
+      <div className="space-y-1">
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color || entry.fill || "#3b9ede" }} />
+            <span className="font-bold text-white text-xs">{entry.name || entry.dataKey} :</span>
+            <span className="font-extrabold text-white text-xs ml-1">{formatMoney(entry.value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Reports() {
   const { income, budgets, settings, savingsGoals } = useApp();
   const expenses = useActiveExpenses();
@@ -297,7 +315,7 @@ function Reports() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="month" tick={{fontSize:12,fill:"#94a3b8"}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fontSize:12,fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={80} />
-                <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid rgba(255, 255, 255, 0.15)",borderRadius:"0.75rem",fontSize:"12px",color:"#f8fafc"}} itemStyle={{color:"#f8fafc",fontWeight:600}} labelStyle={{color:"#f8fafc",fontWeight:600}} formatter={(v:number,n:string)=>[formatMoney(v),n]} />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend wrapperStyle={{fontSize:12}} />
                 <Bar dataKey="income" name="Income" fill="#4caf8a" radius={[6,6,0,0]} />
                 <Bar dataKey="expenses" name="Expenses" fill="#e05c3a" radius={[6,6,0,0]} />
@@ -465,7 +483,7 @@ function Reports() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="date" tick={{fontSize:11,fill:"#94a3b8"}} axisLine={false} tickLine={false} />
                           <YAxis tick={{fontSize:11,fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={70} />
-                          <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid rgba(255, 255, 255, 0.15)",borderRadius:"0.75rem",fontSize:"12px",color:"#f8fafc"}} itemStyle={{color:"#f8fafc",fontWeight:600}} labelStyle={{color:"#f8fafc",fontWeight:600}} formatter={(v:number)=>[formatMoney(v),"Spent"]} />
+                          <Tooltip content={<CustomChartTooltip />} />
                           <Line type="monotone" dataKey="amount" stroke="#3b9ede" strokeWidth={2.5} dot={{r:4,fill:"#3b9ede"}} activeDot={{r:6}} />
                         </LineChart>
                       </ResponsiveContainer>

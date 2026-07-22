@@ -18,9 +18,25 @@ const COLORS = ["#3b9ede","#4caf8a","#e8a838","#e05c3a","#8b5cf6","#60a5fa"];
 const INCOME_COLOR = "#4caf8a";
 const EXPENSE_COLOR = "#e05c3a";
 
-const tooltipStyle = { backgroundColor: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "0.75rem", color: "#f8fafc", fontSize: "12px" };
-const tooltipItemStyle = { color: "#f8fafc", fontWeight: 600 };
-const tooltipLabelStyle = { color: "#f8fafc", fontWeight: 600 };
+const tooltipStyle = { backgroundColor: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "0.75rem", color: "#ffffff", fontSize: "12px" };
+
+function CustomChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-2xl backdrop-blur-md">
+      {label && <p className="mb-1.5 text-[11px] font-bold text-slate-300">{label}</p>}
+      <div className="space-y-1">
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color || entry.fill || "#3b9ede" }} />
+            <span className="font-bold text-white text-xs">{entry.name || entry.dataKey} :</span>
+            <span className="font-extrabold text-white text-xs ml-1">{formatMoney(entry.value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Dashboard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -90,7 +106,7 @@ function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={80} />
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} formatter={(v: number, n: string) => [formatMoney(v), n]} />
+                  <Tooltip content={<CustomChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="income" name="Income" fill={INCOME_COLOR} radius={[6,6,0,0]} />
                   <Bar dataKey="expenses" name="Expenses" fill={EXPENSE_COLOR} radius={[6,6,0,0]} />
@@ -100,7 +116,7 @@ function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={80} />
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} formatter={(v: number, n: string) => [formatMoney(v), n]} />
+                  <Tooltip content={<CustomChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Line type="monotone" dataKey="income" name="Income" stroke={INCOME_COLOR} strokeWidth={2.5} dot={{ r: 4, fill: INCOME_COLOR }} activeDot={{ r: 6 }} />
                   <Line type="monotone" dataKey="expenses" name="Expenses" stroke={EXPENSE_COLOR} strokeWidth={2.5} dot={{ r: 4, fill: EXPENSE_COLOR }} activeDot={{ r: 6 }} />
@@ -128,7 +144,7 @@ function Dashboard() {
                     <Pie data={distribution} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
                       {distribution.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />)}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} formatter={(v: number, n: string) => [formatMoney(v), n]} />
+                    <Tooltip content={<CustomChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
