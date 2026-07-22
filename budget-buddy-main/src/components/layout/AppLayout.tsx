@@ -19,6 +19,7 @@ import {
   Sparkles,
   Crown,
   Menu,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -491,46 +492,72 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Main column */}
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
-          {/* Logo (mobile only) */}
+          {/* Logo, Three-dots More Menu, and Notification Bell (mobile view) */}
           <div className="flex items-center gap-2 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Wallet className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground">
+            <span className="text-lg font-semibold tracking-tight text-foreground mr-1">
               Expensia
             </span>
-          </div>
 
-          <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
-            {/* Hamburger menu button (mobile only) */}
+            {/* Three dots More dropdown button */}
             <div className="relative flex items-center">
-              <Button
-                ref={toggleBtnRef}
-                variant="ghost"
-                className={cn(
-                  "lg:hidden rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200 flex items-center gap-1.5 px-3 py-1.5 h-10 select-none",
-                  shouldPulse && "animate-menu-pulse"
-                )}
-                onClick={() => {
-                  handleMenuClick();
-                  setShowTooltip(false);
-                  localStorage.setItem("expensia-seen-menu-tooltip", "true");
-                }}
-                aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
-                aria-expanded={isDrawerOpen}
-              >
-                {isDrawerOpen ? (
-                  <X className="h-4.5 w-4.5" />
-                ) : (
-                  <Menu className="h-4.5 w-4.5" />
-                )}
-                <span className="text-xs font-semibold text-primary/95">More</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    ref={toggleBtnRef}
+                    variant="ghost"
+                    className={cn(
+                      "rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200 flex items-center gap-1 px-2.5 py-1 h-9 select-none",
+                      shouldPulse && "animate-menu-pulse"
+                    )}
+                    aria-label="More options"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="text-xs font-semibold text-primary/95">More</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>{settings.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">Profile & Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      handleMenuClick();
+                      setShowTooltip(false);
+                      localStorage.setItem("expensia-seen-menu-tooltip", "true");
+                    }}
+                    className="flex items-center justify-between"
+                  >
+                    <span>Navigation Menu</span>
+                    <Menu className="h-4 w-4 text-primary" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setHelpOpen(true)} className="flex items-center justify-between">
+                    <span>Help Center</span>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </DropdownMenuItem>
+                  {avatar && (
+                    <DropdownMenuItem onClick={() => setLightboxOpen(true)}>
+                      View Picture
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Educational discoverability popover tooltip */}
               {showTooltip && !isDrawerOpen && (
-                <div className="absolute right-0 top-12 z-50 w-56 rounded-xl bg-primary p-3.5 text-primary-foreground shadow-2xl animate-bounce lg:hidden text-left border border-primary-foreground/15">
-                  <div className="absolute -top-1.5 right-3.5 h-3 w-3 rotate-45 bg-primary" />
+                <div className="absolute left-0 top-11 z-50 w-56 rounded-xl bg-primary p-3.5 text-primary-foreground shadow-2xl animate-bounce lg:hidden text-left border border-primary-foreground/15">
+                  <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 bg-primary" />
                   <p className="text-xs font-semibold leading-relaxed">
                     💡 Tap here to find Income, Savings, Reports, Predictions, and more!
                   </p>
@@ -550,23 +577,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
               )}
             </div>
 
+            {/* Notification Bell on left side for mobile */}
+            <NotificationBell />
+          </div>
+
+          {/* Desktop Right Header Actions */}
+          <div className="hidden lg:flex flex-1 items-center justify-end gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setHelpOpen(true)}
               aria-label="Help"
-              className="hidden lg:inline-flex"
             >
               <HelpCircle className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="hidden lg:inline-flex"
-            >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <NotificationBell />
             <DropdownMenu>
@@ -590,25 +613,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </DropdownMenuItem>
                   </>
                 )}
-                
-                {/* Mobile-only menu items */}
-                {isMobile && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={toggleTheme} className="flex items-center justify-between">
-                      <span>Theme Mode</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        {theme === "dark" ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-blue-500" />}
-                        {theme === "dark" ? "Light" : "Dark"}
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setHelpOpen(true)} className="flex items-center justify-between">
-                      <span>Help Center</span>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </DropdownMenuItem>
-                  </>
-                )}
-
+                <DropdownMenuItem onClick={() => setHelpOpen(true)} className="flex items-center justify-between">
+                  <span>Help Center</span>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
