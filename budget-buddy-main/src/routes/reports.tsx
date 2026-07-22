@@ -297,7 +297,7 @@ function Reports() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis dataKey="month" tick={{fontSize:12,fill:"#94a3b8"}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fontSize:12,fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={80} />
-                <Tooltip contentStyle={{backgroundColor:"#1e293b",border:"none",borderRadius:"0.75rem",fontSize:"12px",color:"#f1f5f9"}} formatter={(v:number,n:string)=>[formatMoney(v),n]} />
+                <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid rgba(255, 255, 255, 0.15)",borderRadius:"0.75rem",fontSize:"12px",color:"#f8fafc"}} itemStyle={{color:"#f8fafc",fontWeight:600}} labelStyle={{color:"#f8fafc",fontWeight:600}} formatter={(v:number,n:string)=>[formatMoney(v),n]} />
                 <Legend wrapperStyle={{fontSize:12}} />
                 <Bar dataKey="income" name="Income" fill="#4caf8a" radius={[6,6,0,0]} />
                 <Bar dataKey="expenses" name="Expenses" fill="#e05c3a" radius={[6,6,0,0]} />
@@ -465,7 +465,7 @@ function Reports() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="date" tick={{fontSize:11,fill:"#94a3b8"}} axisLine={false} tickLine={false} />
                           <YAxis tick={{fontSize:11,fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={formatMoney} width={70} />
-                          <Tooltip contentStyle={{backgroundColor:"#1e293b",border:"none",borderRadius:"0.75rem",fontSize:"12px",color:"#f1f5f9"}} formatter={(v:number)=>[formatMoney(v),"Spent"]} />
+                          <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid rgba(255, 255, 255, 0.15)",borderRadius:"0.75rem",fontSize:"12px",color:"#f8fafc"}} itemStyle={{color:"#f8fafc",fontWeight:600}} labelStyle={{color:"#f8fafc",fontWeight:600}} formatter={(v:number)=>[formatMoney(v),"Spent"]} />
                           <Line type="monotone" dataKey="amount" stroke="#3b9ede" strokeWidth={2.5} dot={{r:4,fill:"#3b9ede"}} activeDot={{r:6}} />
                         </LineChart>
                       </ResponsiveContainer>
