@@ -38,7 +38,7 @@ function textColor(pct: number) {
 }
 
 function Savings() {
-  const { savingsGoals, deleteSavingsGoal, addSavingsContribution } = useApp();
+  const { savingsGoals, deleteSavingsGoal, addSavingsContribution, expenses, income } = useApp();
   
   const [drawer, setDrawer] = useState(false);
   const [editing, setEditing] = useState<SavingsGoal | null>(null);
@@ -70,6 +70,17 @@ function Savings() {
   };
 
   const handleAddMoney = async (goalId: string, amount: number) => {
+    const totalIncome = income.reduce((s, inc) => s + inc.amount, 0);
+    const totalExpenses = expenses.filter((e) => !e.deleted).reduce((s, e) => s + e.amount, 0);
+    const totalSaved = savingsGoals.reduce((s, g) => s + g.currentAmount, 0);
+    const availableBalance = totalIncome - totalExpenses - totalSaved;
+
+    if (amount > availableBalance) {
+      const avail = Math.max(0, availableBalance);
+      toast.error(`Insufficient balance. Your current available balance is ${formatMoney(avail)}, so you cannot add ${formatMoney(amount)} to savings.`);
+      return;
+    }
+
     try {
       await addSavingsContribution({
         goalId,

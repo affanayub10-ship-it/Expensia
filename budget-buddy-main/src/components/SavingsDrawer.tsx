@@ -21,7 +21,7 @@ const SLIDER_STEP = 100;
 export function SavingsDrawer({ open, onOpenChange, editing }: {
   open: boolean; onOpenChange: (o: boolean) => void; editing?: SavingsGoal | null;
 }) {
-  const { addSavingsGoal, updateSavingsGoal } = useApp();
+  const { addSavingsGoal, updateSavingsGoal, expenses, income, savingsGoals } = useApp();
   const isMobile = useIsMobile();
   const [title, setTitle] = useState("");
   const [targetAmount, setTargetAmount] = useState(1000);
@@ -50,6 +50,22 @@ export function SavingsDrawer({ open, onOpenChange, editing }: {
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (targetAmount <= 0) return toast.error("Target amount must be greater than zero");
+
+    if (currentAmount > 0) {
+      const totalIncome = income.reduce((s, inc) => s + inc.amount, 0);
+      const totalExpenses = expenses.filter((e) => !e.deleted).reduce((s, e) => s + e.amount, 0);
+      const otherSaved = (savingsGoals || [])
+        .filter((g) => (editing ? g.id !== editing.id : true))
+        .reduce((s, g) => s + g.currentAmount, 0);
+      const availableBalance = totalIncome - totalExpenses - otherSaved;
+
+      if (currentAmount > availableBalance) {
+        const avail = Math.max(0, availableBalance);
+        return toast.error(
+          `Insufficient balance. Your current available balance is ${formatMoney(avail)}, so you cannot allocate ${formatMoney(currentAmount)} to savings.`
+        );
+      }
+    }
     setIsSubmitting(true);
     try {
       if (editing) {

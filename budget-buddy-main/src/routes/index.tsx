@@ -40,7 +40,7 @@ function CustomChartTooltip({ active, payload, label }: any) {
 
 function Dashboard() {
   const { isAuthenticated, isLoading } = useAuth();
-  const { income, budgets, settings } = useApp();
+  const { income, budgets, settings, savingsGoals } = useApp();
   const expenses = useActiveExpenses();
   const dateFmt = settings.dateFormat;
   const [chartType, setChartType] = useState<"line" | "bar">("bar");
@@ -49,8 +49,9 @@ function Dashboard() {
 
   const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
   const totalIncome   = useMemo(() => income.reduce((s, i) => s + i.amount, 0), [income]);
+  const totalSaved    = useMemo(() => (savingsGoals || []).reduce((s, g) => s + g.currentAmount, 0), [savingsGoals]);
   const totalBudget   = useMemo(() => budgets.reduce((s, b) => s + b.limit, 0), [budgets]);
-  const balance       = totalIncome - totalExpenses;
+  const balance       = Math.max(0, totalIncome - totalExpenses - totalSaved);
   const budgetedCategories = useMemo(() => new Set(budgets.map((b) => b.category)), [budgets]);
   const budgetedExpenses  = useMemo(() => expenses.filter((e) => budgetedCategories.has(e.category)).reduce((s, e) => s + e.amount, 0), [expenses, budgetedCategories]);
   const remainingBudget   = totalBudget - budgetedExpenses;

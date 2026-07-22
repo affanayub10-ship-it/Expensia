@@ -84,11 +84,13 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
     const otherExpenses = expenses
       .filter((e) => !e.deleted && (editing ? e.id !== editing.id : true))
       .reduce((s, e) => s + e.amount, 0);
-    const currentBalance = totalIncome - otherExpenses;
+    const totalSaved = (savingsGoals || []).reduce((s, g) => s + g.currentAmount, 0);
+    const currentBalance = totalIncome - otherExpenses - totalSaved;
 
     if (form.amount > currentBalance) {
+      const avail = Math.max(0, currentBalance);
       return toast.error(
-        `Balance is not sufficient so you can't add this expense. (Available balance: ${formatMoney(currentBalance)})`
+        `Insufficient balance. Your current available balance is ${formatMoney(avail)}, so you cannot add this expense.`
       );
     }
 
