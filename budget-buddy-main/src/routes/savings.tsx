@@ -5,6 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/shared";
 import { PremiumGate } from "@/components/PremiumGate";
 import { SavingsDrawer } from "@/components/SavingsDrawer";
@@ -42,6 +52,7 @@ function Savings() {
   
   const [drawer, setDrawer] = useState(false);
   const [editing, setEditing] = useState<SavingsGoal | null>(null);
+  const [toDeleteGoal, setToDeleteGoal] = useState<SavingsGoal | null>(null);
   const [contribGoal, setContribGoal] = useState<SavingsGoal | null>(null);
   const [contribAmount, setContribAmount] = useState(100);
   const [contribType, setContribType] = useState<"deposit" | "withdrawal">("deposit");
@@ -269,10 +280,7 @@ function Savings() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-xl text-expense hover:bg-expense/10"
-                      onClick={() => {
-                        deleteSavingsGoal(r.id);
-                        toast.success("Savings goal removed");
-                      }}
+                      onClick={() => setToDeleteGoal(r)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -358,6 +366,32 @@ function Savings() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!toDeleteGoal} onOpenChange={(o) => !o && setToDeleteGoal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this savings goal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{toDeleteGoal?.title}"? Any accumulated savings in this goal will be released back to your available balance.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-expense text-expense-foreground hover:bg-expense/90"
+              onClick={() => {
+                if (toDeleteGoal) {
+                  deleteSavingsGoal(toDeleteGoal.id);
+                  toast.success(`Savings goal "${toDeleteGoal.title}" removed`);
+                  setToDeleteGoal(null);
+                }
+              }}
+            >
+              Confirm & Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PremiumGate>
   );
 }

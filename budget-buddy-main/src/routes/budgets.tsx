@@ -18,6 +18,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageHeader, CategoryPill } from "@/components/shared";
 import { PremiumGate } from "@/components/PremiumGate";
 import { formatDate } from "@/lib/format";
@@ -60,6 +70,7 @@ function Budgets() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
+  const [toDelete, setToDelete] = useState<Budget | null>(null);
   const [category, setCategory] = useState("Food");
   const [sliderVal, setSliderVal] = useState(1000);
   const [hoveredBudget, setHoveredBudget] = useState<string | null>(null);
@@ -343,11 +354,11 @@ function Budgets() {
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button
+                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 rounded-xl text-expense hover:bg-expense/10"
-                              onClick={(e) => { e.stopPropagation(); deleteBudget(r.id); toast.success("Budget removed"); }}
+                              onClick={(e) => { e.stopPropagation(); setToDelete(r); }}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -497,6 +508,31 @@ function Budgets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this budget?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the budget for "{toDelete?.category}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-expense text-expense-foreground hover:bg-expense/90"
+              onClick={() => {
+                if (toDelete) {
+                  deleteBudget(toDelete.id);
+                  toast.success(`Budget for "${toDelete.category}" removed`);
+                  setToDelete(null);
+                }
+              }}
+            >
+              Confirm & Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PremiumGate>
   );
 }
