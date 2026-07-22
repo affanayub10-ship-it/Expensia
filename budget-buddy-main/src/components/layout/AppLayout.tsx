@@ -399,6 +399,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
           {NAV.map((item) => {
+            if (item.label === "Settings") return null;
             const isPremiumRoute = PREMIUM_ROUTES.has(item.to);
             const locked = isPremiumRoute && !isPremium;
             const isPremiumItem = item.label === "Premium";
