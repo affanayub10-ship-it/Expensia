@@ -33,7 +33,7 @@ function emptyExpense(category: string): Expense {
 export function ExpenseDrawer({ open, onOpenChange, editing }: {
   open: boolean; onOpenChange: (o: boolean) => void; editing?: Expense | null;
 }) {
-  const { addExpense, updateExpense, settings } = useApp();
+  const { addExpense, updateExpense, settings, expenses, income } = useApp();
   const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [receiptPreview, setReceiptPreview] = useState<{ name: string; url: string; type: string } | null>(null);
@@ -79,6 +79,19 @@ export function ExpenseDrawer({ open, onOpenChange, editing }: {
   const submit = async () => {
     if (!form.title.trim()) return toast.error("Title is required");
     if (!form.amount || form.amount <= 0) return toast.error("Enter a valid amount");
+
+    const totalIncome = income.reduce((s, inc) => s + inc.amount, 0);
+    const otherExpenses = expenses
+      .filter((e) => !e.deleted && (editing ? e.id !== editing.id : true))
+      .reduce((s, e) => s + e.amount, 0);
+    const currentBalance = totalIncome - otherExpenses;
+
+    if (form.amount > currentBalance) {
+      return toast.error(
+        `Balance is not sufficient so you can't add this expense. (Available balance: ${formatMoney(currentBalance)})`
+      );
+    }
+
     setIsSubmitting(true);
     try {
       if (editing) {
